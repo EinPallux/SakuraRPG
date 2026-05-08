@@ -1,0 +1,766 @@
+/* =========================================
+   SAKURA CHRONICLES - MODERN THEME
+   "Ethereal & Tactile" Design System
+   ========================================= */
+
+/* --- 1. Global Reset & Utilities --- */
+
+:root {
+    --primary: #FF9EB5;
+    --primary-dark: #FF7597;
+    --secondary: #6366F1;
+    --surface: #ffffff;
+    --bg-app: #F8FAFC;
+    
+    /* Rarity Colors (Vibrant) */
+    --rarity-n: #10B981;  /* Emerald */
+    --rarity-r: #3B82F6;  /* Blue */
+    --rarity-sr: #8B5CF6; /* Violet */
+    --rarity-ssr: #F59E0B; /* Amber */
+    --rarity-ur: #EC4899; /* Pink */
+}
+
+/* Smooth Scrolling & Selection */
+html {
+    scroll-behavior: smooth;
+}
+
+::selection {
+    background: rgba(255, 158, 181, 0.3);
+    color: #be185d;
+}
+
+/* Custom Scrollbar (Webkit) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* --- 2. Animations & Effects --- */
+
+/* Background Gradient Mesh Overlay */
+.bg-gradient-overlay {
+    background: 
+        radial-gradient(circle at 15% 50%, rgba(255, 158, 181, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.08), transparent 25%);
+}
+
+/* Petal Falling Animation */
+.petal {
+    position: absolute;
+    background-color: var(--primary);
+    border-radius: 150% 0 150% 0;
+    animation: animate-petal linear infinite;
+    z-index: 0;
+}
+
+@keyframes animate-petal {
+    0% {
+        opacity: 0;
+        top: -10%;
+        transform: translateX(20px) rotate(0deg);
+    }
+    10% {
+        opacity: 1;
+    }
+    20% {
+        transform: translateX(-20px) rotate(45deg);
+    }
+    40% {
+        transform: translateX(-20px) rotate(90deg);
+    }
+    60% {
+        transform: translateX(20px) rotate(135deg);
+    }
+    80% {
+        transform: translateX(-20px) rotate(180deg);
+    }
+    100% {
+        top: 110%;
+        transform: translateX(-20px) rotate(225deg);
+        opacity: 0;
+    }
+}
+
+/* Fade In Up Entry Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-entry {
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* Stagger delays for lists */
+.animate-entry:nth-child(1) { animation-delay: 0.05s; }
+.animate-entry:nth-child(2) { animation-delay: 0.1s; }
+.animate-entry:nth-child(3) { animation-delay: 0.15s; }
+.animate-entry:nth-child(4) { animation-delay: 0.2s; }
+.animate-entry:nth-child(5) { animation-delay: 0.25s; }
+
+/* Pulse Glow */
+@keyframes pulse-soft {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 158, 181, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(255, 158, 181, 0); }
+}
+
+.pulse-active {
+    animation: pulse-soft 2s infinite;
+}
+
+/* --- 3. Component Styles --- */
+
+/* Sidebar Navigation Items */
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    margin-bottom: 0.25rem;
+}
+
+.nav-item:hover {
+    background-color: #f1f5f9;
+    color: #334155;
+    transform: translateX(4px);
+}
+
+.nav-item.active {
+    background-color: rgba(255, 158, 181, 0.15);
+    color: #be185d; /* Dark Pink */
+    font-weight: 600;
+}
+
+.nav-item.active i {
+    color: var(--primary-dark);
+}
+
+/* Mobile Nav Items */
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    width: 100%;
+    height: 100%;
+}
+
+.mobile-nav-item i {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+}
+
+.mobile-nav-item.active {
+    color: var(--primary-dark);
+}
+
+.mobile-nav-item.active i {
+    transform: translateY(-2px);
+}
+
+/* Resource Pills (Top Bar) */
+.resource-pill {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 0.35rem 0.5rem 0.35rem 0.35rem;
+    border-radius: 9999px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    gap: 0.5rem;
+    transition: transform 0.2s;
+    white-space: nowrap;
+}
+
+.resource-pill:hover {
+    transform: translateY(-1px);
+    border-color: #cbd5e1;
+}
+
+.resource-pill .icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.resource-pill .label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.resource-pill .value {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    color: #334155;
+    font-size: 0.95rem;
+}
+
+.plus-btn {
+    width: 1.25rem;
+    height: 1.25rem;
+    background: #f1f5f9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #64748b;
+    margin-left: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.plus-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* General Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    gap: 0.5rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    box-shadow: 0 4px 12px rgba(255, 117, 151, 0.3);
+}
+
+.btn-primary:hover {
+    filter: brightness(1.05);
+    box-shadow: 0 6px 16px rgba(255, 117, 151, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+}
+
+.btn-secondary:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+/* --- 4. Game Specific Styles --- */
+
+/* Hero Cards (Roster & Team) */
+.hero-card {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #f1f5f9;
+}
+
+.hero-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.1);
+}
+
+.hero-card-image {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    background: #f1f5f9;
+}
+
+/* Rarity Accents */
+.hero-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    z-index: 2;
+}
+
+.hero-card[data-rarity="N"]::after { background: var(--rarity-n); }
+.hero-card[data-rarity="R"]::after { background: var(--rarity-r); }
+.hero-card[data-rarity="SR"]::after { background: var(--rarity-sr); }
+.hero-card[data-rarity="SSR"]::after { background: var(--rarity-ssr); }
+.hero-card[data-rarity="UR"]::after { background: var(--rarity-ur); height: 4px; box-shadow: 0 0 10px var(--rarity-ur); }
+
+/* Battle Arena Layout */
+.battle-dashboard {
+    display: grid;
+    grid-template-columns: 320px 1fr 320px;
+    gap: 1.5rem;
+    height: 100%;
+}
+
+@media (max-width: 1400px) {
+    .battle-dashboard {
+        grid-template-columns: 260px 1fr;
+    }
+    .battle-dashboard-right {
+        display: none; 
+    }
+}
+
+@media (max-width: 1024px) {
+    .battle-dashboard {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+/* ===========================
+   NEW CARD DESIGN (Redesign)
+   =========================== */
+
+/* The Main Card Container */
+.battle-unit {
+    position: relative;
+    background: white;
+    border-radius: 1.25rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    transition: all 0.2s ease-out;
+    border: 3px solid transparent;
+    width: 16rem; 
+    height: 20rem; /* Fixed height for consistency */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Ensures image stays inside corners */
+    user-select: none;
+}
+
+/* Border States */
+.battle-unit.is-hero { border-color: transparent; }
+.battle-unit.is-enemy { border-color: transparent; }
+.battle-unit.is-enemy:hover { border-color: #fee2e2; }
+
+/* The Top Image Section */
+.battle-unit-image-area {
+    width: 100%;
+    height: 55%; /* Top half */
+    position: relative;
+    background: #f1f5f9;
+}
+
+.battle-unit-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+/* Zoom effect on turn */
+.battle-unit.active-turn .battle-unit-img {
+    transform: scale(1.1);
+}
+
+/* Gradient Overlay for Name Readability */
+.battle-unit-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70%;
+    background: linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0.6) 20%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 1rem 0.5rem 1rem;
+    z-index: 10;
+}
+
+/* Text in the Overlay */
+.battle-unit-name {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #1e293b;
+    line-height: 1.1;
+    margin-bottom: 2px;
+}
+
+.battle-unit-info {
+    font-size: 0.65rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* The Bottom Stats Section */
+.battle-unit-stats-area {
+    flex: 1;
+    padding: 0.5rem 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: white;
+    z-index: 10;
+}
+
+/* Stat Grid (ATK, DEF, SPD) */
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.stat-val {
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: #334155;
+}
+
+.stat-icon {
+    font-size: 0.7rem;
+}
+
+/* Bar Groups */
+.bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 6px;
+}
+
+.bar-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+/* Bars */
+.bar-track {
+    width: 100%;
+    height: 6px; /* Rounded and thin */
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bar-fill.hp { background: #10b981; }
+.bar-fill.hp.low { background: #ef4444; }
+.bar-fill.mana { background: #3b82f6; }
+
+/* Active Turn Highlight (Outer Ring) */
+.battle-unit.active-turn {
+    transform: translateY(-5px);
+    box-shadow: 0 0 0 4px rgba(255, 158, 181, 0.6), 0 12px 24px rgba(0,0,0,0.1);
+    z-index: 20; /* Ensure active unit pops above others */
+}
+
+.battle-unit.dead {
+    filter: grayscale(1);
+    opacity: 0.6;
+    transform: scale(0.95);
+    pointer-events: none;
+}
+
+/* Damage Floaters */
+.damage-number {
+    position: absolute;
+    left: 50%;
+    top: 40%;
+    transform: translate(-50%, -50%);
+    font-weight: 900;
+    font-size: 2.5rem; /* Large impact font */
+    text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff; /* White outline */
+    pointer-events: none;
+    animation: popAndFloat 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    z-index: 50;
+    white-space: nowrap;
+}
+
+@keyframes popAndFloat {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    30% { transform: translate(-50%, -80%) scale(1.2); opacity: 1; }
+    100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
+}
+
+/* --- 5. Garden & Forge Styles --- */
+
+.plot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.garden-plot {
+    aspect-ratio: 1;
+    background: #F0FDF4;
+    border: 2px dashed #86EFAC;
+    border-radius: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.garden-plot:hover {
+    border-color: #22C55E;
+    background: #DCFCE7;
+    transform: scale(1.02);
+}
+
+.garden-plot.locked {
+    background: #F1F5F9;
+    border-color: #CBD5E1;
+    cursor: not-allowed;
+}
+
+/* Forge Placeholder */
+.forge-slot {
+    background: #F8FAFC;
+    border: 2px solid #E2E8F0;
+    border-radius: 1rem;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94A3B8;
+}
+
+/* --- 6. Utility Overrides --- */
+
+.glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Notification Toast */
+.toast-notification {
+    background: white;
+    border-left: 4px solid var(--primary);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 300px;
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* =========================================
+   GACHA ANIMATION UPGRADES
+   ========================================= */
+
+@keyframes violent-shake {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-2px, 2px) rotate(-1deg); }
+    50% { transform: translate(2px, -2px) rotate(1deg); }
+    75% { transform: translate(-2px, -2px) rotate(-1deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.animate-shake-charging {
+    animation: violent-shake 0.1s infinite;
+}
+
+/* ORIGINAL SMALLER BEAM (Kept for compatibility) */
+@keyframes beam-expand-epic {
+    0% { height: 0%; opacity: 0; width: 10px; }
+    10% { height: 100%; opacity: 1; width: 20px; }
+    50% { opacity: 1; width: 150px; filter: brightness(2); }
+    100% { height: 100%; opacity: 0; width: 1000px; }
+}
+
+/* NEW: LARGER BEAM ANIMATION FOR BIG SCREEN */
+@keyframes beam-expand-epic-large {
+    0% { height: 0%; opacity: 0; width: 20px; }
+    10% { height: 100%; opacity: 1; width: 40px; }
+    50% { opacity: 1; width: 300px; filter: brightness(2); }
+    100% { height: 100%; opacity: 0; width: 2000px; }
+}
+
+@keyframes screen-flash-white {
+    0% { opacity: 0; }
+    50% { opacity: 1; background: white; }
+    100% { opacity: 0; }
+}
+
+.gacha-beam {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0px;
+    height: 0%;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.beam-N { background: linear-gradient(to top, #10B981, white); box-shadow: 0 0 50px #10B981; }
+.beam-R { background: linear-gradient(to top, #3B82F6, white); box-shadow: 0 0 50px #3B82F6; }
+.beam-SR { background: linear-gradient(to top, #8B5CF6, white); box-shadow: 0 0 50px #8B5CF6; }
+.beam-SSR { background: linear-gradient(to top, #F59E0B, #FEF3C7); box-shadow: 0 0 80px #F59E0B; }
+.beam-UR { 
+    background: linear-gradient(to top, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b); 
+    box-shadow: 0 0 100px rgba(255, 255, 255, 0.8);
+    filter: hue-rotate(0deg);
+    animation: hue-cycle 1s infinite linear;
+}
+
+@keyframes hue-cycle {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
+}
+
+@keyframes float-up-fast {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translateY(-400px) scale(0); opacity: 0; }
+}
+
+.gacha-particle {
+    position: absolute;
+    border-radius: 50%;
+    animation: float-up-fast 1.5s ease-out forwards;
+    background: white;
+    box-shadow: 0 0 10px white;
+}
+
+/* =========================================
+   BATTLE ANIMATION FIXES
+   ========================================= */
+
+@keyframes pulsate-gold {
+    0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); border-color: rgba(251, 191, 36, 0.5); }
+    50% { box-shadow: 0 0 20px 5px rgba(251, 191, 36, 0.6); border-color: rgba(251, 191, 36, 1); }
+    100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); border-color: rgba(251, 191, 36, 0.5); }
+}
+
+.glow-gold {
+    animation: pulsate-gold 1.5s infinite;
+    z-index: 20;
+    border: 3px solid #f59e0b !important;
+}
+
+/* Hero moving RIGHT to attack enemy */
+@keyframes lunge-right {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(-30px) rotate(-5deg); } /* Wind up */
+    50% { transform: translateX(200px) rotate(5deg); }  /* Strike */
+    100% { transform: translateX(0); }
+}
+
+/* Enemy moving LEFT to attack hero */
+@keyframes lunge-left {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(30px) rotate(5deg); }   /* Wind up */
+    50% { transform: translateX(-200px) rotate(-5deg); } /* Strike */
+    100% { transform: translateX(0); }
+}
+
+@keyframes shake-damage {
+    0% { transform: translateX(0); filter: brightness(1); }
+    20% { transform: translateX(-15px); filter: brightness(2) saturate(2) sepia(1) hue-rotate(-50deg); /* Red flash */ }
+    40% { transform: translateX(15px); }
+    60% { transform: translateX(-15px); }
+    80% { transform: translateX(15px); }
+    100% { transform: translateX(0); filter: brightness(1); }
+}
+
+@keyframes magic-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); filter: brightness(1); }
+    50% { transform: scale(1.1); box-shadow: 0 0 30px 10px rgba(99, 102, 241, 0); filter: brightness(1.5); }
+    100% { transform: scale(1); }
+}
+
+@keyframes death-fade {
+    0% { opacity: 1; filter: grayscale(0); }
+    100% { opacity: 0.5; filter: grayscale(1) blur(2px); transform: scale(0.9); }
+}
+
+/* Important: z-index ensures moving units stay on top */
+.anim-lunge-right { animation: lunge-right 0.6s ease-in-out; z-index: 100; }
+.anim-lunge-left { animation: lunge-left 0.6s ease-in-out; z-index: 100; }
+.anim-hit { animation: shake-damage 0.4s ease-in-out; }
+.anim-cast { animation: magic-pulse 0.8s ease-in-out; }
+.anim-die { animation: death-fade 0.5s forwards; }
