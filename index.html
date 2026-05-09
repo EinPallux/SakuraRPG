@@ -3,37 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FF9EB5">
+    <meta name="description" content="Sakura Chronicles — anime gacha RPG, no login required, fully browser-based.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SakuraRPG">
     <title>Sakura Chronicles | Anime Gacha RPG</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans:    ['Inter', 'sans-serif'],
                         heading: ['Outfit', 'sans-serif'],
                     },
                     colors: {
-                        primary: '#FF9EB5',    /* Sakura Pink */
+                        primary:     '#FF9EB5',
                         primaryDark: '#FF7597',
-                        secondary: '#6366F1',  /* Indigo */
-                        accent: '#F59E0B',     /* Gold */
-                        surface: '#FFFFFF',
-                        background: '#F8FAFC', /* Slate 50 */
-                        dark: '#1E293B',       /* Slate 800 */
+                        secondary:   '#6366F1',
+                        accent:      '#F59E0B',
+                        surface:     '#FFFFFF',
+                        background:  '#F8FAFC',
+                        dark:        '#1E293B',
                     }
                 }
             }
         }
     </script>
-    
+
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-background text-dark font-sans h-screen overflow-hidden selection:bg-primary selection:text-white">
@@ -42,11 +47,12 @@
     <div class="bg-gradient-overlay fixed inset-0 z-0 opacity-40 pointer-events-none"></div>
 
     <div id="app" class="relative z-10 flex h-full w-full">
-        
+
+        <!-- Desktop Sidebar -->
         <aside class="hidden md:flex flex-col w-64 bg-surface border-r border-slate-200 h-full shadow-lg z-20 transition-all duration-300">
             <div class="p-6 flex items-center gap-3 border-b border-slate-100">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primaryDark flex items-center justify-center text-white text-xl shadow-lg shadow-pink-200">
-                    <i class="fa-solid fa-sakura"></i>
+                    🌸
                 </div>
                 <div>
                     <h1 class="font-heading font-bold text-xl tracking-tight text-slate-800">Sakura<span class="text-primary">RPG</span></h1>
@@ -54,8 +60,7 @@
                 </div>
             </div>
 
-            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1" id="desktop-nav">
-                </nav>
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1" id="desktop-nav"></nav>
 
             <div class="p-4 border-t border-slate-100">
                 <div class="bg-slate-50 rounded-xl p-3 flex items-center gap-3 cursor-pointer hover:bg-slate-100 transition-colors" id="sidebar-profile-btn">
@@ -70,31 +75,35 @@
             </div>
         </aside>
 
+        <!-- Main Content Area -->
         <main class="flex-1 flex flex-col h-full relative overflow-hidden">
-            
+
+            <!-- Top Header Bar -->
             <header class="h-16 bg-surface/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 md:px-8 z-20 shadow-sm">
-                <button class="md:hidden p-2 text-slate-600 hover:text-primary transition-colors" id="mobile-menu-btn">
+                <!-- Mobile hamburger -->
+                <button class="md:hidden p-2 text-slate-600 hover:text-primary transition-colors" id="mobile-menu-btn" aria-label="Open menu">
                     <i class="fa-solid fa-bars text-xl"></i>
                 </button>
 
+                <!-- Resource pills -->
                 <div class="flex items-center gap-2 md:gap-6 overflow-x-auto no-scrollbar ml-auto">
-                    <div class="resource-pill group">
+                    <div class="resource-pill">
                         <div class="icon bg-yellow-100 text-yellow-600"><i class="fa-solid fa-coins"></i></div>
                         <div class="flex flex-col leading-none">
                             <span class="label">Gold</span>
                             <span class="value" id="gold-display">0</span>
                         </div>
                     </div>
-                    
-                    <div class="resource-pill group">
+
+                    <div class="resource-pill">
                         <div class="icon bg-pink-100 text-pink-600"><i class="fa-solid fa-spa"></i></div>
                         <div class="flex flex-col leading-none">
                             <span class="label">Petals</span>
                             <span class="value" id="petals-display">0</span>
                         </div>
                     </div>
-                    
-                    <div class="resource-pill group">
+
+                    <div class="resource-pill">
                         <div class="icon bg-purple-100 text-purple-600"><i class="fa-solid fa-gem"></i></div>
                         <div class="flex flex-col leading-none">
                             <span class="label">Orbs</span>
@@ -104,33 +113,29 @@
                 </div>
             </header>
 
+            <!-- Tab Content -->
             <div id="content-area" class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50/50 p-4 md:p-6 pb-24 md:pb-6 relative scroll-smooth">
-                
-                <div id="battle-tab" class="view-content active opacity-100 transition-opacity duration-300"></div>
 
-                <div id="garden-tab" class="view-content hidden opacity-0 transition-opacity duration-300"></div>
+                <div id="battle-tab"       class="view-content active opacity-100 transition-opacity duration-300"></div>
+                <div id="garden-tab"       class="view-content hidden opacity-0 transition-opacity duration-300"></div>
+                <div id="forge-tab"        class="view-content hidden opacity-0 transition-opacity duration-300"></div>
+                <div id="roster-tab"       class="view-content hidden opacity-0 transition-opacity duration-300"></div>
+                <div id="gacha-tab"        class="view-content hidden opacity-0 transition-opacity duration-300"></div>
+                <div id="skill-tree-tab"   class="view-content hidden opacity-0 transition-opacity duration-300"></div>
+                <div id="expedition-tab"   class="view-content hidden opacity-0 transition-opacity duration-300"></div>
+                <div id="quests-tab"       class="view-content hidden opacity-0 transition-opacity duration-300"></div>
+                <div id="achievements-tab" class="view-content hidden opacity-0 transition-opacity duration-300"></div>
+                <div id="settings-tab"     class="view-content hidden opacity-0 transition-opacity duration-300"></div>
 
-                <div id="forge-tab" class="view-content hidden opacity-0 transition-opacity duration-300"></div>
-                
-                <div id="roster-tab" class="view-content hidden opacity-0 transition-opacity duration-300"></div>
-
-                <div id="gacha-tab" class="view-content hidden opacity-0 transition-opacity duration-300"></div>
-
-                <div id="skill-tree-tab" class="view-content hidden opacity-0 transition-opacity duration-300"></div>
-
-                <div id="expedition-tab" class="view-content hidden opacity-0 transition-opacity duration-300"></div>
-
-                <div id="quests-tab" class="view-content hidden opacity-0 transition-opacity duration-300"></div>
-                
-                <div id="settings-tab" class="view-content hidden opacity-0 transition-opacity duration-300"></div>
             </div>
 
-            <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-slate-200 h-16 flex justify-around items-center z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]" id="mobile-nav">
-                </nav>
+            <!-- Mobile Bottom Nav (primary tabs only) -->
+            <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-slate-200 h-16 flex justify-around items-center z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]" id="mobile-nav"></nav>
 
         </main>
     </div>
 
+    <!-- Modal Overlay -->
     <div id="modal-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
         <div id="modal-content" class="bg-surface w-full max-w-6xl rounded-2xl shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh] overflow-hidden relative">
             <button class="modal-close-btn absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition-colors z-10" onclick="closeModal()">
@@ -140,19 +145,21 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
     <div id="toast-container" class="fixed top-20 right-4 z-[60] flex flex-col gap-2 pointer-events-none"></div>
 
+    <!-- Scripts (order matters: data → classes → storage → features → ui → main) -->
     <script src="utils.js"></script>
     <script src="data.js"></script>
     <script src="classes.js"></script>
     <script src="storage.js"></script>
-    
+
     <script src="gacha.js"></script>
     <script src="battle.js"></script>
     <script src="garden.js"></script>
     <script src="forge.js"></script>
     <script src="skillTree.js"></script>
-    
+
     <script src="ui.js"></script>
     <script src="main.js"></script>
 </body>
