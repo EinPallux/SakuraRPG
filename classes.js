@@ -411,6 +411,9 @@ class Enemy {
         this.statusEffects = [];
         this.shieldHP = 0;
         this.reward = template.reward || { gold: Math.floor(30 + waveNumber * 5) };
+        this.emoji    = template.emoji    || '';
+        this.behavior = template.behavior || 'aggressive';
+        this.special  = template.special  || [];
     }
 
     isInvincible() {
