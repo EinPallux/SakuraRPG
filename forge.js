@@ -11,9 +11,6 @@ function renderForge(gameState) {
     const container = document.getElementById('forge-tab');
     if (!container) return;
 
-    // Generate Materials HTML
-    const materialsHtml = generateMaterialsList(gameState);
-
     container.innerHTML = `
         <div class="max-w-6xl mx-auto space-y-6 animate-entry">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -26,6 +23,12 @@ function renderForge(gameState) {
                         <p class="text-slate-500 text-sm">Craft powerful equipment using materials found in battle.</p>
                     </div>
                 </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-indigo-600">${_countOwnedEquipment(gameState)}</div>
+                        <div class="text-xs text-slate-400 uppercase font-bold">Equipment Owned</div>
+                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -34,8 +37,8 @@ function renderForge(gameState) {
                         <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide border-b border-slate-100 pb-2">
                             Materials Storage
                         </h3>
-                        <div class="space-y-3" id="forge-materials-list">
-                            ${materialsHtml}
+                        <div class="space-y-2" id="forge-materials-list">
+                            ${_generateMaterialsList(gameState)}
                         </div>
                     </div>
                 </div>
@@ -43,7 +46,7 @@ function renderForge(gameState) {
                 <div class="lg:col-span-2">
                     <h3 class="font-bold text-slate-700 mb-4 ml-1">Available Recipes</h3>
                     <div id="forge-recipes-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${generateRecipesGrid(gameState)}
+                        ${_generateRecipesGrid(gameState)}
                     </div>
                 </div>
             </div>
@@ -52,53 +55,46 @@ function renderForge(gameState) {
 }
 
 // ===========================
-// RENDER HELPERS
+// HELPERS
 // ===========================
 
-function generateMaterialsList(gameState) {
-    // Get all known materials from DB
-    const allMaterials = FORGE_DATABASE.materials;
-    
-    // Check user inventory
+function _countOwnedEquipment(gameState) {
+    const eq = gameState.inventory?.equipment || {};
+    return Object.values(eq).reduce((sum, n) => sum + (n || 0), 0);
+}
+
+function _generateMaterialsList(gameState) {
     const userMats = gameState.inventory.materials || {};
-    
-    return allMaterials.map(mat => {
-        const count = userMats[mat.id] || 0;
+    return FORGE_DATABASE.materials.map(mat => {
+        const count   = userMats[mat.id] || 0;
         const hasSome = count > 0;
-        
         return `
             <div class="flex items-center justify-between p-2 rounded-lg ${hasSome ? 'bg-indigo-50/50' : 'bg-slate-50 opacity-60'}">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded bg-white border border-slate-200 flex items-center justify-center text-slate-500 text-xs">
-                        <i class="fa-solid fa-cube"></i>
+                    <div class="w-8 h-8 rounded bg-white border border-slate-200 flex items-center justify-center text-slate-500 text-sm">
+                        ${mat.emoji || '🔩'}
                     </div>
                     <div>
                         <div class="text-sm font-bold text-slate-700">${mat.name}</div>
-                        <div class="text-[10px] text-slate-400">${mat.desc}</div>
+                        <div class="text-[10px] text-slate-400">${mat.desc || ''}</div>
                     </div>
                 </div>
-                <div class="font-mono font-bold ${hasSome ? 'text-indigo-600' : 'text-slate-300'}">x${count}</div>
+                <div class="font-mono font-bold ${hasSome ? 'text-indigo-600' : 'text-slate-300'}">×${count}</div>
             </div>
         `;
     }).join('');
 }
 
-function generateRecipesGrid(gameState) {
+function _generateRecipesGrid(gameState) {
     return FORGE_DATABASE.recipes.map(recipe => {
-        // Calculate if craftable
-        let canCraft = true;
+        let canCraft = gameState.gold >= recipe.cost;
         let matReqHtml = '';
-        
-        // Check Gold
-        if (gameState.gold < recipe.cost) canCraft = false;
-        
-        // Check Materials
+
         for (const [matId, qty] of Object.entries(recipe.materials)) {
-            const matName = FORGE_DATABASE.materials.find(m => m.id === matId)?.name || 'Unknown';
-            const owned = (gameState.inventory.materials && gameState.inventory.materials[matId]) || 0;
-            
+            const matData = FORGE_DATABASE.materials.find(m => m.id === matId);
+            const matName = matData?.name || matId;
+            const owned   = gameState.inventory.materials?.[matId] || 0;
             if (owned < qty) canCraft = false;
-            
             matReqHtml += `
                 <div class="flex justify-between text-xs mb-1">
                     <span class="text-slate-600">${matName}</span>
@@ -107,23 +103,34 @@ function generateRecipesGrid(gameState) {
             `;
         }
 
-        // Get Result Item Info (Assuming weapon/armor databases exist or placeholders)
-        // For this V1, we just use the name from the recipe
-        
+        // Lookup result item from EQUIPMENT_DATABASE
+        const resultItem  = EQUIPMENT_DATABASE?.[recipe.resultId];
+        const resultName  = resultItem?.name  || recipe.name;
+        const resultSlot  = resultItem?.slot  || 'equipment';
+        const resultEmoji = _slotEmoji(resultSlot);
+        const ownedCount  = gameState.inventory.equipment?.[recipe.resultId] || 0;
+
         return `
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col">
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-lg flex items-center justify-center text-xl shadow-sm border border-orange-100">
-                            <i class="fa-solid fa-shield-halved"></i>
+                        <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-lg flex items-center justify-center text-2xl shadow-sm border border-orange-100">
+                            ${resultEmoji}
                         </div>
                         <div>
-                            <h4 class="font-bold text-slate-800">${recipe.name}</h4>
-                            <div class="text-xs text-orange-400 font-bold">Equipment</div>
+                            <h4 class="font-bold text-slate-800">${resultName}</h4>
+                            <div class="text-xs text-orange-400 font-bold capitalize">${resultSlot}</div>
                         </div>
                     </div>
+                    ${ownedCount > 0 ? `<div class="text-xs bg-green-100 text-green-600 font-bold px-2 py-1 rounded-full">Owned ×${ownedCount}</div>` : ''}
                 </div>
-                
+
+                ${resultItem ? `
+                    <div class="text-xs text-slate-500 mb-3 bg-slate-50 p-2 rounded-lg">
+                        ${_formatEquipStats(resultItem.stats || {})}
+                    </div>
+                ` : ''}
+
                 <div class="bg-slate-50 rounded-lg p-3 mb-4 flex-1">
                     <div class="text-[10px] font-bold text-slate-400 uppercase mb-2">Requirements</div>
                     ${matReqHtml}
@@ -132,9 +139,11 @@ function generateRecipesGrid(gameState) {
                         <span class="${gameState.gold >= recipe.cost ? 'text-yellow-600' : 'text-red-500'} font-bold">${formatNumber(recipe.cost)} G</span>
                     </div>
                 </div>
-                
-                <button class="btn w-full ${canCraft ? 'btn-primary' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}" 
-                        onclick="${canCraft ? `craftItem('${recipe.id}')` : ''}" ${!canCraft ? 'disabled' : ''}>
+
+                <button class="btn w-full ${canCraft ? 'btn-primary' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}"
+                        id="forge-btn-${recipe.id}"
+                        onclick="${canCraft ? `craftItem('${recipe.id}', this)` : ''}"
+                        ${!canCraft ? 'disabled' : ''}>
                     <i class="fa-solid fa-hammer"></i> Craft
                 </button>
             </div>
@@ -142,44 +151,61 @@ function generateRecipesGrid(gameState) {
     }).join('');
 }
 
+function _slotEmoji(slot) {
+    const map = { weapon: '⚔️', armor: '🛡️', accessory: '💍' };
+    return map[slot] || '📦';
+}
+
+function _formatEquipStats(stats) {
+    return Object.entries(stats)
+        .map(([k, v]) => `<span class="inline-block mr-2 text-indigo-600 font-bold">${k.toUpperCase()} +${v}</span>`)
+        .join('');
+}
+
 // ===========================
 // CRAFTING LOGIC
 // ===========================
 
-window.craftItem = function(recipeId) {
-    const gameState = window.gameState; // Access global state
+window.craftItem = function(recipeId, btnEl) {
+    const gs     = window.gameState;
     const recipe = FORGE_DATABASE.recipes.find(r => r.id === recipeId);
-    
-    if (!recipe) return;
-    
-    // Double Check Costs
-    if (gameState.gold < recipe.cost) {
-        showToast('Not enough Gold!', 'error');
-        return;
-    }
-    
+    if (!recipe || !gs) return;
+
+    // Validate costs
+    if (gs.gold < recipe.cost) { showToast('Not enough Gold!', 'error'); return; }
     for (const [matId, qty] of Object.entries(recipe.materials)) {
-        if (gameState.getItemCount('materials', matId) < qty) {
-            showToast('Missing Materials!', 'error');
+        if ((gs.inventory.materials?.[matId] || 0) < qty) {
+            showToast('Missing materials!', 'error');
             return;
         }
     }
-    
-    // Deduct Resources
-    gameState.gold -= recipe.cost;
+
+    // Deduct resources
+    gs.gold -= recipe.cost;
     for (const [matId, qty] of Object.entries(recipe.materials)) {
-        gameState.removeItem('materials', matId, qty);
+        gs.removeItem('materials', matId, qty);
     }
-    
-    // Grant Item (Placeholder logic: We don't have a full inventory UI for equipment yet, so we just log it)
-    // In a full implementation, we would add this to gameState.inventory.equipment
-    showToast(`Crafted ${recipe.name}! (Equipped to inventory)`, 'success');
-    
-    // Play Effect
-    playParticleEffect(event.target);
-    
-    // Save & Refresh
-    saveGame(gameState);
-    updateUI(gameState);
-    renderForge(gameState);
+
+    // Grant equipment item
+    gs.addEquipmentItem(recipe.resultId);
+
+    // Check achievements
+    if (typeof gs.checkAchievements === 'function') {
+        const unlocked = gs.checkAchievements();
+        unlocked.forEach(a => showToast(`Achievement: ${a.name}! 🏆`, 'success'));
+    }
+
+    // Button flash effect
+    if (btnEl) {
+        btnEl.textContent = '✨ Crafted!';
+        btnEl.classList.add('bg-green-500', 'text-white');
+        btnEl.classList.remove('btn-primary');
+        setTimeout(() => renderForge(gs), 800);
+    }
+
+    const resultName = EQUIPMENT_DATABASE?.[recipe.resultId]?.name || recipe.name;
+    showToast(`Crafted ${resultName}!`, 'success');
+
+    saveGame(gs);
+    updateUI(gs);
 };
