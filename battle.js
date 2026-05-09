@@ -72,11 +72,22 @@ class BattleState {
     }
 
     _getTierPool(wave) {
-        const allNonBoss = ENEMIES_DATABASE.filter(e => !e.isBoss);
-        if (wave <= 10)  return allNonBoss.slice(0, 6);
-        if (wave <= 25)  return allNonBoss.slice(0, 12);
-        if (wave <= 40)  return allNonBoss.slice(0, 18);
-        return allNonBoss.slice(0, 22);
+        const all = ENEMIES_DATABASE.filter(e => !e.isBoss);
+        // Enemies are tagged by their natural tier via id ranges
+        const tier1 = all.filter(e => ['e001','e002','e003','e004','e005','e028','e050','e051','e052','e053','e054','e055'].includes(e.id));
+        const tier2 = all.filter(e => ['e006','e007','e009','e021','e022','e023','e056','e057','e058','e059','e060','e061','e062','e063'].includes(e.id));
+        const tier3 = all.filter(e => ['e011','e012','e024','e025','e026','e027','e064','e065','e066','e067','e068','e069','e070','e071','e072'].includes(e.id));
+        const tier4 = all.filter(e => ['e030','e031','e032','e033','e073','e074','e075','e076'].includes(e.id));
+        const tier5 = all.filter(e => ['e077','e078','e079'].includes(e.id));
+
+        if (wave <= 5)   return tier1;
+        if (wave <= 10)  return [...tier1, ...tier2.slice(0, 4)];
+        if (wave <= 18)  return [...tier1.slice(3), ...tier2];
+        if (wave <= 25)  return [...tier2, ...tier3.slice(0, 5)];
+        if (wave <= 35)  return [...tier2.slice(4), ...tier3];
+        if (wave <= 45)  return [...tier3, ...tier4.slice(0, 4)];
+        if (wave <= 60)  return [...tier3.slice(4), ...tier4];
+        return [...tier4, ...tier5];
     }
 
     addLog(message, type = 'neutral') {
@@ -374,32 +385,119 @@ function executeDPSAction(hero, battleState, gameState) {
 // ===========================
 
 function executeEnemyAction(enemy, battleState, gameState) {
-    // Enemy AI: prefer lowest-HP hero, or tank if taunt would be relevant
+    const aliveHeroes = battleState.aliveHeroes;
+    if (aliveHeroes.length === 0) return;
+
+    const behavior = enemy.behavior || 'aggressive';
+    const specials  = enemy.special || [];
+
+    // ── Behavior-based targeting ────────────────────────────────
     let target = null;
-
-    // 30% chance: target weakest HP ally
-    if (Math.random() < 0.3) {
-        target = battleState.aliveHeroes.sort((a, b) => a.currentHP - b.currentHP)[0];
+    switch (behavior) {
+        case 'aggressive':
+            // Attack lowest-HP hero to secure kills
+            target = Math.random() < 0.6
+                ? aliveHeroes.slice().sort((a, b) => a.currentHP - b.currentHP)[0]
+                : getRandomTarget(aliveHeroes);
+            break;
+        case 'defensive':
+            // Prefer highest-DEF hero (tank) to not be exploited; fallback random
+            target = Math.random() < 0.5
+                ? aliveHeroes.slice().sort((a, b) => b.def - a.def)[0]
+                : getRandomTarget(aliveHeroes);
+            break;
+        case 'evasive':
+            // Target lowest-SPD hero (easier to hit)
+            target = Math.random() < 0.4
+                ? aliveHeroes.slice().sort((a, b) => a.spd - b.spd)[0]
+                : getRandomTarget(aliveHeroes);
+            break;
+        case 'berserker':
+            // Always target lowest HP; bonus damage when own HP < 50% handled below
+            target = aliveHeroes.slice().sort((a, b) => a.currentHP - b.currentHP)[0];
+            break;
+        case 'technical':
+            // Prefer heroes without status effects (fresh targets for debuffs)
+            {
+                const clean = aliveHeroes.filter(h => h.statusEffects.length === 0);
+                target = clean.length > 0 ? clean[Math.floor(Math.random() * clean.length)] : getRandomTarget(aliveHeroes);
+            }
+            break;
+        case 'support':
+            // Healers try to heal allies first, then attack
+            {
+                const injured = battleState.enemies.filter(e => e.isAlive && e.currentHP < e.maxHP * 0.5);
+                if (injured.length > 0 && specials.includes('healer') && Math.random() < 0.5) {
+                    const healTarget = injured[Math.floor(Math.random() * injured.length)];
+                    const healAmt = Math.floor(enemy.atk * 0.8);
+                    healTarget.heal(healAmt);
+                    showFloatingText(healTarget, `+${healAmt}`, 'heal');
+                    battleState.addLog(`${enemy.name} healed ${healTarget.name}!`, 'heal');
+                    updateBattleUI(gameState, battleState);
+                    return;
+                }
+                target = getRandomTarget(aliveHeroes);
+            }
+            break;
+        default:
+            target = getRandomTarget(aliveHeroes);
     }
-    // 20% chance: target lowest DEF (squishy DPS)
-    else if (Math.random() < 0.2) {
-        target = battleState.aliveHeroes.sort((a, b) => a.def - b.def)[0];
-    }
-    // Fallback: random
-    else {
-        target = getRandomTarget(battleState.heroes);
+
+    if (!target) return;
+
+    // ── Berserker bonus damage at low HP ──────────────────────
+    const hpPct = enemy.currentHP / enemy.maxHP;
+    if (behavior === 'berserker' && hpPct < 0.5 && Math.random() < 0.3) {
+        battleState.addLog(`${enemy.name} enters a frenzy!`, 'warning');
+        // Temporarily boost atk for this hit (handled via 1.5× in performAttack below)
+        enemy._berserkActive = true;
     }
 
-    if (target) performAttack(enemy, target, battleState, false);
+    performAttack(enemy, target, battleState, false);
+    enemy._berserkActive = false;
 
-    // Boss occasionally casts an ability
-    if (enemy.isBoss && Math.random() < 0.15) {
-        const aliveHeroes = battleState.aliveHeroes;
-        if (aliveHeroes.length > 0) {
-            const poisonTarget = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
-            applyStatus(poisonTarget, 'poison', 2, 0, battleState);
-            battleState.addLog(`${enemy.name} used a sinister power!`, 'special');
+    // ── Special abilities (post-attack) ──────────────────────
+    const abilityRoll = Math.random();
+
+    if (specials.includes('poisoner') && abilityRoll < 0.22) {
+        const pt = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
+        applyStatus(pt, 'poison', 2, 0, battleState);
+        battleState.addLog(`☠️ ${enemy.name} poisoned ${pt.name}!`, 'warning');
+    } else if (specials.includes('stunner') && abilityRoll < 0.15) {
+        const pt = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
+        applyStatus(pt, 'stun', 1, 0, battleState);
+        battleState.addLog(`⚡ ${enemy.name} stunned ${pt.name}!`, 'warning');
+    } else if (specials.includes('shielder') && enemy.currentHP < enemy.maxHP * 0.4 && abilityRoll < 0.25) {
+        enemy.shieldHP += Math.floor(enemy.maxHP * 0.1);
+        showFloatingText(enemy, '🛡️SHIELD', 'heal');
+        battleState.addLog(`🛡️ ${enemy.name} raised a shield!`, 'special');
+    } else if (specials.includes('healer') && abilityRoll < 0.18) {
+        const healAmt = Math.floor(enemy.maxHP * 0.08);
+        enemy.heal(healAmt);
+        showFloatingText(enemy, `+${healAmt}`, 'heal');
+        battleState.addLog(`💚 ${enemy.name} regenerated!`, 'heal');
+    }
+
+    // Boss extra ability
+    if (enemy.isBoss && Math.random() < 0.20) {
+        const bossTarget = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
+        const bossAbility = specials[Math.floor(Math.random() * specials.length)] || 'poisoner';
+        if (bossAbility === 'poisoner') {
+            applyStatus(bossTarget, 'poison', 3, 0, battleState);
+            battleState.addLog(`💀 ${enemy.name} unleashed Dark Miasma!`, 'special');
+        } else if (bossAbility === 'stunner') {
+            applyStatus(bossTarget, 'stun', 1, 0, battleState);
+            battleState.addLog(`⚡ ${enemy.name} used Paralyzing Roar!`, 'special');
+        } else if (bossAbility === 'shielder') {
+            enemy.shieldHP += Math.floor(enemy.maxHP * 0.15);
+            battleState.addLog(`🛡️ ${enemy.name} conjured a barrier!`, 'special');
+        } else if (bossAbility === 'healer') {
+            const hAmt = Math.floor(enemy.maxHP * 0.12);
+            enemy.heal(hAmt);
+            showFloatingText(enemy, `+${hAmt}`, 'heal');
+            battleState.addLog(`💚 ${enemy.name} regenerated power!`, 'heal');
         }
+        updateBattleUI(gameState, battleState);
     }
 }
 
@@ -443,7 +541,9 @@ function getRandomTarget(units) {
 function performAttack(attacker, defender, battleState, isHero) {
     if (!attacker.isAlive || !defender.isAlive) return;
 
-    const atkStat = isHero ? attacker.getEffectiveStat('atk') : attacker.atk;
+    let atkStat = isHero ? attacker.getEffectiveStat('atk') : attacker.atk;
+    // Berserker bonus
+    if (!isHero && attacker._berserkActive) atkStat = Math.floor(atkStat * 1.5);
     const defStat = defender.def;
 
     let damage = Math.max(1, atkStat - defStat * 0.45);
@@ -747,6 +847,16 @@ function showFloatingText(unit, text, type) {
     setTimeout(() => floater.remove(), 900);
 }
 
+// Element color helpers
+function _elBg(element) {
+    const map = { Fire:'#fef2f2', Water:'#eff6ff', Wind:'#f0fdf4', Light:'#fefce8', Dark:'#faf5ff' };
+    return map[element] || '#f8fafc';
+}
+function _elText(element) {
+    const map = { Fire:'#dc2626', Water:'#2563eb', Wind:'#059669', Light:'#d97706', Dark:'#7c3aed' };
+    return map[element] || '#475569';
+}
+
 // ===========================
 // RENDERING — PRE-BATTLE
 // ===========================
@@ -855,81 +965,111 @@ function renderBattleArena(gameState, battleState) {
     const container = document.getElementById('battle-tab');
     if (!container) return;
 
+    const isBossWave = battleState && battleState.enemies.some(e => e.isBoss);
+    const waveLabel = isBossWave
+        ? `<span class="text-red-500 animate-pulse">👑 BOSS</span>`
+        : `Wave ${battleState?.waveNumber ?? gameState.currentWave}`;
+
     container.innerHTML = `
         <div id="battle-arena-root" class="battle-dashboard animate-entry h-[calc(100vh-140px)] min-h-[580px]">
+
             <!-- LEFT: Stats & Log -->
             <div class="flex flex-col gap-3 h-full overflow-hidden">
-                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                <!-- Wave stats bar -->
+                <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
                     <div class="grid grid-cols-3 gap-2 text-center">
-                        <div class="bg-slate-50 rounded-lg p-2">
-                            <div class="text-[10px] text-slate-400 uppercase font-bold">Wave</div>
-                            <div class="text-xl font-heading font-bold text-primary" id="dash-wave">1</div>
+                        <div class="arena-stat-pill ${isBossWave ? 'bg-red-50 border border-red-200' : 'bg-slate-50'}">
+                            <div class="arena-stat-label">Wave</div>
+                            <div class="arena-stat-val ${isBossWave ? 'text-red-500' : 'text-primary'}" id="dash-wave">${waveLabel}</div>
                         </div>
-                        <div class="bg-slate-50 rounded-lg p-2">
-                            <div class="text-[10px] text-slate-400 uppercase font-bold">Kills</div>
-                            <div class="text-xl font-heading font-bold text-slate-700" id="dash-kills">0</div>
+                        <div class="arena-stat-pill bg-slate-50">
+                            <div class="arena-stat-label">Kills</div>
+                            <div class="arena-stat-val text-slate-700" id="dash-kills">0</div>
                         </div>
-                        <div class="bg-slate-50 rounded-lg p-2">
-                            <div class="text-[10px] text-slate-400 uppercase font-bold">Turn</div>
-                            <div class="text-xl font-heading font-bold text-slate-700" id="dash-turn">0</div>
+                        <div class="arena-stat-pill bg-slate-50">
+                            <div class="arena-stat-label">Turn</div>
+                            <div class="arena-stat-val text-slate-700" id="dash-turn">0</div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Combat log -->
                 <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100 flex-1 flex flex-col overflow-hidden">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Combat Log</div>
-                    <div id="combat-log" class="flex-1 overflow-y-auto text-[11px] space-y-1 font-mono inner-shadow pr-1"></div>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Combat Log</div>
+                        <button class="text-[10px] text-slate-300 hover:text-slate-500" onclick="document.getElementById('combat-log').innerHTML=''">Clear</button>
+                    </div>
+                    <div id="combat-log" class="flex-1 overflow-y-auto text-[11px] space-y-0.5 font-mono pr-1"></div>
                 </div>
             </div>
 
-            <!-- CENTER: Arena -->
-            <div class="flex flex-col gap-3 h-full relative">
-                <div class="flex-1 rounded-xl border-2 border-red-100 bg-gradient-to-b from-red-50/30 to-transparent flex flex-col relative overflow-hidden">
-                    <div class="absolute top-2 left-3 text-[10px] font-bold text-red-400 uppercase tracking-widest">Enemies · Click to Focus</div>
-                    <div id="arena-enemies" class="flex gap-3 justify-center flex-wrap w-full items-end p-3 pt-7 min-h-[200px]"></div>
+            <!-- CENTER: Battle Field -->
+            <div class="flex flex-col gap-2 h-full relative">
+
+                <!-- Enemy zone -->
+                <div class="arena-zone arena-enemy-zone flex-1">
+                    <div class="arena-zone-label enemy">
+                        <i class="fa-solid fa-skull-crossbones mr-1"></i>
+                        Enemies
+                        <span class="ml-2 text-red-300 font-normal" id="enemy-count-label"></span>
+                    </div>
+                    <div id="arena-enemies" class="arena-units enemy-side"></div>
                 </div>
 
-                <div class="h-10 flex items-center justify-center relative shrink-0">
-                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-dashed border-slate-200"></div></div>
-                    <span class="relative bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full z-10">VS</span>
+                <!-- VS divider -->
+                <div class="arena-vs-bar shrink-0">
+                    <div class="arena-vs-line"></div>
+                    <div class="arena-vs-badge">VS</div>
 
                     <div id="next-wave-container" class="absolute inset-0 flex items-center justify-center z-50 hidden">
-                        <button class="btn btn-primary animate-bounce shadow-lg px-8 py-3 text-lg border-2 border-white"
+                        <button class="btn btn-primary animate-bounce shadow-xl px-8 py-3 text-base border-2 border-white"
                                 onclick="startWave(window.gameState)">
-                            Next Wave <i class="fa-solid fa-arrow-right ml-2"></i>
+                            <i class="fa-solid fa-forward mr-2"></i> Next Wave
                         </button>
                     </div>
                 </div>
 
-                <div class="flex-1 rounded-xl border-2 border-blue-100 bg-gradient-to-t from-blue-50/30 to-transparent flex flex-col relative overflow-hidden">
-                    <div class="absolute top-2 left-3 text-[10px] font-bold text-blue-400 uppercase tracking-widest">Heroes</div>
-                    <div id="arena-heroes" class="flex gap-3 justify-center flex-wrap w-full items-end p-3 pt-7 min-h-[200px]"></div>
+                <!-- Hero zone -->
+                <div class="arena-zone arena-hero-zone flex-1">
+                    <div class="arena-zone-label hero">
+                        <i class="fa-solid fa-shield-halved mr-1"></i>
+                        Your Team
+                    </div>
+                    <div id="arena-heroes" class="arena-units hero-side"></div>
                 </div>
             </div>
 
             <!-- RIGHT: Controls -->
             <div class="flex flex-col gap-3 h-full overflow-y-auto battle-dashboard-right">
+
+                <!-- Ultimates -->
                 <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Ultimates</div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        <i class="fa-solid fa-star-of-david mr-1 text-amber-400"></i> Ultimates
+                    </div>
                     <div id="ultimates-list" class="space-y-2"></div>
                 </div>
 
+                <!-- Battle items -->
                 <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Battle Items</div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        <i class="fa-solid fa-flask mr-1 text-green-400"></i> Battle Items
+                    </div>
                     <div id="battle-tea-list" class="grid grid-cols-2 gap-2"></div>
                 </div>
 
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100 mt-auto">
-                    <button id="auto-btn" class="btn w-full mb-2 ${gameState.autoCast ? 'btn-primary' : 'btn-secondary'}" onclick="toggleAutoCast()">
+                <!-- Controls -->
+                <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100 mt-auto space-y-2">
+                    <button id="auto-btn" class="btn w-full ${gameState.autoCast ? 'btn-primary' : 'btn-secondary'} text-sm" onclick="toggleAutoCast()">
                         <i class="fa-solid fa-robot"></i>
                         <span id="auto-btn-text">${gameState.autoCast ? 'Auto: ON' : 'Auto: OFF'}</span>
                     </button>
-                    <button id="speed-btn" class="btn btn-secondary w-full mb-2" onclick="toggleBattleSpeed()">
-                        ${battleSpeed}x Speed
+                    <button id="speed-btn" class="speed-toggle-btn w-full justify-center speed-${battleSpeed}x" onclick="toggleBattleSpeed()">
+                        <i class="fa-solid fa-gauge-high"></i> ${battleSpeed}x Speed
                     </button>
-                    <button class="btn btn-secondary w-full text-red-500 border-red-100 hover:bg-red-50"
+                    <button class="btn btn-secondary w-full text-sm text-red-500 border-red-100 hover:bg-red-50"
                             onclick="handleRunDefeat(window.gameState)">
-                        <i class="fa-solid fa-flag"></i> Retreat
+                        <i class="fa-solid fa-flag-checkered mr-1"></i> Retreat
                     </button>
                 </div>
             </div>
@@ -946,12 +1086,25 @@ function renderBattleArena(gameState, battleState) {
 function updateBattleUI(gameState, battleState) {
     if (!battleState) return;
 
-    const waveEl = document.getElementById('dash-wave');
+    const waveEl  = document.getElementById('dash-wave');
     const killsEl = document.getElementById('dash-kills');
     const turnEl  = document.getElementById('dash-turn');
-    if (waveEl) waveEl.textContent = gameState.currentWave;
+    const isBoss  = battleState.enemies.some(e => e.isBoss);
+    if (waveEl) {
+        waveEl.innerHTML = isBoss
+            ? `<span class="text-red-500">👑 BOSS</span>`
+            : String(gameState.currentWave);
+    }
     if (killsEl) killsEl.textContent = formatNumber(gameState.totalKills);
     if (turnEl)  turnEl.textContent  = battleState.turnCounter;
+
+    // Update enemy count label
+    const countLabel = document.getElementById('enemy-count-label');
+    if (countLabel) {
+        const alive = battleState.aliveEnemies.length;
+        const total = battleState.enemies.length;
+        countLabel.textContent = `${alive}/${total}`;
+    }
 
     const logEl = document.getElementById('combat-log');
     if (logEl) {
@@ -1030,53 +1183,66 @@ function renderUnits(container, units, isHero, battleState) {
             const imgSrc = isHero ? `images/${unit.id}.jpg` : `images/enemies/${unit.id}.jpg`;
             const elColor = ELEMENT_COLORS[unit.element] || ELEMENT_COLORS['Fire'];
 
+            const behaviorIcon = { aggressive:'⚔️', defensive:'🛡️', evasive:'💨', berserker:'🔥', technical:'🔮', support:'💚' };
+            const unitSubtitle = isHero
+                ? `Lv.${unit.level} · ${unit.class}`
+                : `${unit.behavior ? (behaviorIcon[unit.behavior] || '') + ' ' + unit.behavior : ''}`;
+            const unitEmoji = (!isHero && unit.emoji) ? unit.emoji : '';
+
             div.innerHTML = `
                 <div class="battle-unit-image-area">
-                    <img src="${imgSrc}" class="battle-unit-img"
-                         onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden')">
-                    <div class="hidden absolute inset-0 bg-gradient-to-br ${elColor.from} ${elColor.to} flex items-center justify-center text-white text-3xl font-bold">${unit.name.substring(0,2).toUpperCase()}</div>
+                    ${unitEmoji
+                        ? `<div class="absolute inset-0 bg-gradient-to-br ${elColor.from} ${elColor.to} flex items-center justify-center text-5xl select-none">${unitEmoji}</div>`
+                        : `<img src="${imgSrc}" class="battle-unit-img"
+                               onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden')">
+                           <div class="hidden absolute inset-0 bg-gradient-to-br ${elColor.from} ${elColor.to} flex items-center justify-center text-white text-3xl font-bold">${unit.name.substring(0,2).toUpperCase()}</div>`
+                    }
 
-                    <div class="absolute top-1.5 left-1.5 element-badge z-10">
-                        <span>${elColor.emoji}</span><span class="hidden md:inline text-[9px] uppercase font-bold">${unit.element}</span>
+                    <div class="absolute top-1.5 left-1.5 element-badge z-10" style="background:${_elBg(unit.element)}; color:${_elText(unit.element)}; padding:2px 5px; border-radius:999px; font-size:9px; font-weight:700;">
+                        ${elColor.emoji} ${unit.element}
                     </div>
 
                     ${unit.isBoss ? '<div class="absolute top-1.5 right-1.5 boss-badge z-10">BOSS</div>' : ''}
 
-                    <div class="focus-indicator absolute inset-0 z-20 hidden border-3 border-red-500 rounded-t-xl pointer-events-none">
-                        <div class="absolute top-0 left-0 right-0 flex justify-center pt-1">
-                            <div class="bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-b shadow-lg">TARGET</div>
+                    <div class="focus-indicator absolute inset-0 z-20 hidden pointer-events-none" style="border:3px solid #ef4444; border-radius: inherit;">
+                        <div class="absolute top-0 left-0 right-0 flex justify-center">
+                            <div style="background:#ef4444; color:white; font-size:9px; font-weight:800; padding:2px 8px; border-radius:0 0 6px 6px; letter-spacing:.05em;">TARGET</div>
                         </div>
                     </div>
 
                     <div class="battle-unit-overlay">
                         <div class="battle-unit-name">${unit.name}</div>
-                        <div class="battle-unit-info">${isHero ? `Lv.${unit.level} ${unit.class}` : `Wave ${battleState ? battleState.waveNumber : ''}`}</div>
+                        <div class="battle-unit-info capitalize">${unitSubtitle}</div>
                     </div>
                 </div>
 
                 <div class="battle-unit-stats-area">
-                    <div class="status-badges" id="status-${unitId}"></div>
+                    <div class="status-badges flex flex-wrap gap-0.5 mb-1" id="status-${unitId}"></div>
 
                     <div class="stat-row">
-                        <div class="stat-item"><span class="stat-val stat-val-atk">${unit.atk}</span><span class="stat-icon text-red-400"><i class="fa-solid fa-sword fa-xs"></i></span></div>
-                        <div class="stat-item"><span class="stat-val stat-val-def">${unit.def}</span><span class="stat-icon text-blue-400"><i class="fa-solid fa-shield fa-xs"></i></span></div>
-                        <div class="stat-item"><span class="stat-val stat-val-spd">${unit.spd}</span><span class="stat-icon text-green-400"><i class="fa-solid fa-wind fa-xs"></i></span></div>
+                        <div class="stat-item"><span class="stat-val stat-val-atk">${unit.atk}</span><span class="stat-icon">⚔️</span></div>
+                        <div class="stat-item"><span class="stat-val stat-val-def">${unit.def}</span><span class="stat-icon">🛡️</span></div>
+                        <div class="stat-item"><span class="stat-val stat-val-spd">${unit.spd}</span><span class="stat-icon">💨</span></div>
                     </div>
 
                     <div class="bar-groups">
                         <div class="bar-group">
-                            <div class="bar-label-row"><span>HP</span><span class="hp-text text-[9px]">${hpText}</span></div>
-                            <div class="bar-track">
+                            <div class="bar-label-row">
+                                <span class="text-slate-500">HP</span>
+                                <span class="hp-text text-[9px] font-mono text-slate-400">${hpText}</span>
+                            </div>
+                            <div class="bar-track" style="position:relative;">
                                 <div class="bar-fill hp" style="width:${hpPct}%"></div>
-                                ${shPct > 0 ? `<div class="bar-fill shield" style="width:${shPct}%"></div>` : ''}
+                                ${shPct > 0 ? `<div class="bar-fill shield" style="width:${shPct}%; position:absolute; top:0; left:0; opacity:0.7;"></div>` : ''}
                             </div>
                         </div>
                         ${isHero ? `
                         <div class="bar-group">
-                            <div class="bar-label-row text-blue-400"><span>MP</span><span class="mp-text text-[9px]">${Math.floor(unit.mana)}/${unit.maxMana}</span></div>
-                            <div class="bar-track">
-                                <div class="bar-fill mana" style="width:${mpPct}%"></div>
+                            <div class="bar-label-row">
+                                <span class="text-blue-400">MP</span>
+                                <span class="mp-text text-[9px] font-mono text-slate-400">${Math.floor(unit.mana)}/${unit.maxMana}</span>
                             </div>
+                            <div class="bar-track"><div class="bar-fill mana" style="width:${mpPct}%"></div></div>
                         </div>` : ''}
                     </div>
                 </div>

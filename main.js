@@ -50,6 +50,9 @@ function initializeGame() {
 
     switchView('battle');
     gameState.checkQuestReset();
+
+    // First-time tutorial
+    if (typeof checkAndLaunchTutorial === 'function') checkAndLaunchTutorial();
 }
 
 // ===========================
@@ -292,11 +295,13 @@ window.debug = {
         'addGold(n)':   'Add Gold',
         'addPetals(n)': 'Add Petals',
         'addOrbs(n)':   'Add Spirit Orbs',
+        'tutorial()':   'Replay Tutorial',
         'reset()':      'Wipe Save',
     }),
     addGold:   (n) => { gameState.gold += n;       updateUI(gameState); },
     addPetals: (n) => { gameState.petals += n;     updateUI(gameState); },
     addOrbs:   (n) => { gameState.spiritOrbs += n; updateUI(gameState); },
+    tutorial:  ()  => { if (typeof startTutorial === 'function') startTutorial(true); },
     reset: () => {
         deleteSave();
         window.gameState = null;

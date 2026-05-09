@@ -384,36 +384,89 @@ function renderRoster(gameState) {
     const container = document.getElementById('roster-tab');
     if (!container) return;
 
+    const teamIds = new Set(gameState.team.filter(Boolean));
+    const inTeamCount = teamIds.size;
+    const rarityOrder = { UR: 5, SSR: 4, SR: 3, R: 2, N: 1 };
+    const rarityColors = {
+        UR: 'from-pink-500 to-purple-600', SSR: 'from-amber-400 to-yellow-500',
+        SR: 'from-violet-500 to-purple-600', R: 'from-blue-500 to-cyan-500', N: 'from-emerald-500 to-teal-500'
+    };
+
     container.innerHTML = `
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-3 animate-entry">
-            <h2 class="text-2xl font-heading font-bold text-slate-800">
-                Hero Roster <span class="text-slate-400 text-lg font-normal">(${gameState.roster.length})</span>
-            </h2>
-            <div class="flex gap-2 flex-wrap">
-                <select id="roster-filter-rarity" class="form-select text-sm" onchange="renderRosterGrid(window.gameStateRef)">
-                    <option value="all">All Rarities</option>
-                    <option value="N">Normal</option>
-                    <option value="R">Rare</option>
-                    <option value="SR">Super Rare</option>
-                    <option value="SSR">SSR</option>
-                    <option value="UR">Ultra Rare</option>
-                </select>
-                <select id="roster-filter-element" class="form-select text-sm" onchange="renderRosterGrid(window.gameStateRef)">
-                    <option value="all">All Elements</option>
-                    <option value="Fire">🔥 Fire</option>
-                    <option value="Water">💧 Water</option>
-                    <option value="Wind">🌪️ Wind</option>
-                    <option value="Light">✨ Light</option>
-                    <option value="Dark">🌑 Dark</option>
-                </select>
-                <select id="roster-sort" class="form-select text-sm" onchange="renderRosterGrid(window.gameStateRef)">
-                    <option value="rarity">Sort: Rarity</option>
-                    <option value="level">Sort: Level</option>
-                    <option value="power">Sort: Power</option>
-                </select>
+        <div class="animate-entry max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-5">
+                <div>
+                    <h2 class="text-2xl font-heading font-bold text-slate-800">
+                        Hero Roster
+                        <span class="text-slate-400 text-base font-normal ml-2">${gameState.roster.length} heroes · ${inTeamCount}/5 in team</span>
+                    </h2>
+                </div>
+
+                <!-- Controls bar -->
+                <div class="flex flex-wrap gap-2 items-center">
+                    <!-- Search -->
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="roster-search" placeholder="Search heroes..."
+                               class="form-select pl-7 pr-3 text-sm w-36"
+                               oninput="renderRosterGrid(window.gameStateRef)">
+                    </div>
+
+                    <select id="roster-filter-rarity" class="form-select text-sm" onchange="renderRosterGrid(window.gameStateRef)">
+                        <option value="all">All Rarities</option>
+                        <option value="UR">⭐ UR</option>
+                        <option value="SSR">⭐ SSR</option>
+                        <option value="SR">SR</option>
+                        <option value="R">R</option>
+                        <option value="N">N</option>
+                    </select>
+
+                    <select id="roster-filter-element" class="form-select text-sm" onchange="renderRosterGrid(window.gameStateRef)">
+                        <option value="all">All Elements</option>
+                        <option value="Fire">🔥 Fire</option>
+                        <option value="Water">💧 Water</option>
+                        <option value="Wind">🌪️ Wind</option>
+                        <option value="Light">✨ Light</option>
+                        <option value="Dark">🌑 Dark</option>
+                    </select>
+
+                    <select id="roster-filter-class" class="form-select text-sm" onchange="renderRosterGrid(window.gameStateRef)">
+                        <option value="all">All Classes</option>
+                        <option value="DPS (Single)">⚔️ DPS Single</option>
+                        <option value="DPS (AoE)">💥 DPS AoE</option>
+                        <option value="Healer">💚 Healer</option>
+                        <option value="Buffer">⬆️ Buffer</option>
+                        <option value="Tank">🛡️ Tank</option>
+                    </select>
+
+                    <select id="roster-sort" class="form-select text-sm" onchange="renderRosterGrid(window.gameStateRef)">
+                        <option value="rarity">↑ Rarity</option>
+                        <option value="level">↑ Level</option>
+                        <option value="power">↑ Power</option>
+                        <option value="name">A–Z Name</option>
+                    </select>
+                </div>
             </div>
+
+            <!-- Quick stats row -->
+            <div class="flex gap-3 mb-5 overflow-x-auto no-scrollbar pb-1">
+                ${['UR','SSR','SR','R','N'].map(r => {
+                    const count = gameState.roster.filter(h => h.rarity === r).length;
+                    return `<div class="shrink-0 bg-gradient-to-br ${rarityColors[r]} text-white rounded-xl px-4 py-2 text-center shadow-sm min-w-[56px]">
+                        <div class="text-lg font-heading font-bold">${count}</div>
+                        <div class="text-[10px] font-bold opacity-80">${r}</div>
+                    </div>`;
+                }).join('')}
+                <div class="shrink-0 bg-white border border-slate-200 rounded-xl px-4 py-2 text-center shadow-sm min-w-[64px]">
+                    <div class="text-lg font-heading font-bold text-slate-700">${gameState.roster.length}</div>
+                    <div class="text-[10px] font-bold text-slate-400">Total</div>
+                </div>
+            </div>
+
+            <!-- Hero grid -->
+            <div id="roster-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"></div>
         </div>
-        <div id="roster-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 animate-entry"></div>
     `;
 
     window.gameStateRef = gameState;
@@ -424,18 +477,24 @@ function renderRosterGrid(gameState) {
     const grid = document.getElementById('roster-grid');
     if (!grid) return;
 
-    const rarityFilter   = document.getElementById('roster-filter-rarity')?.value  || 'all';
-    const elementFilter  = document.getElementById('roster-filter-element')?.value || 'all';
-    const sortFilter     = document.getElementById('roster-sort')?.value            || 'rarity';
-    const rarityOrder    = { UR: 5, SSR: 4, SR: 3, R: 2, N: 1 };
+    const searchVal    = (document.getElementById('roster-search')?.value || '').toLowerCase().trim();
+    const rarityFilter = document.getElementById('roster-filter-rarity')?.value  || 'all';
+    const elemFilter   = document.getElementById('roster-filter-element')?.value || 'all';
+    const classFilter  = document.getElementById('roster-filter-class')?.value   || 'all';
+    const sortFilter   = document.getElementById('roster-sort')?.value            || 'rarity';
+    const rarityOrder  = { UR: 5, SSR: 4, SR: 3, R: 2, N: 1 };
+    const teamSet      = new Set(gameState.team.filter(Boolean));
 
     let heroes = [...gameState.roster];
-    if (rarityFilter  !== 'all') heroes = heroes.filter(h => h.rarity   === rarityFilter);
-    if (elementFilter !== 'all') heroes = heroes.filter(h => h.element  === elementFilter);
+    if (searchVal)              heroes = heroes.filter(h => h.name.toLowerCase().includes(searchVal) || h.class.toLowerCase().includes(searchVal));
+    if (rarityFilter !== 'all') heroes = heroes.filter(h => h.rarity  === rarityFilter);
+    if (elemFilter   !== 'all') heroes = heroes.filter(h => h.element === elemFilter);
+    if (classFilter  !== 'all') heroes = heroes.filter(h => h.class   === classFilter);
 
     heroes.sort((a, b) => {
         if (sortFilter === 'level') return b.level - a.level;
         if (sortFilter === 'power') return b.getPower() - a.getPower();
+        if (sortFilter === 'name')  return a.name.localeCompare(b.name);
         const rd = rarityOrder[b.rarity] - rarityOrder[a.rarity];
         return rd !== 0 ? rd : b.level - a.level;
     });
@@ -443,26 +502,30 @@ function renderRosterGrid(gameState) {
     if (heroes.length === 0) {
         grid.innerHTML = `<div class="col-span-full text-center py-16 text-slate-400">
             <i class="fa-solid fa-user-slash text-5xl mb-3 opacity-30"></i>
-            <p>No heroes match your filters.</p>
+            <p class="font-medium">No heroes match your filters.</p>
+            <p class="text-sm mt-1">Try clearing the search or changing filters.</p>
         </div>`;
         return;
     }
 
     grid.innerHTML = '';
     heroes.forEach(hero => {
-        const card = createHeroCard(hero);
+        const inTeam = teamSet.has(hero.id);
+        const card = createHeroCard(hero, inTeam);
         card.onclick = () => showHeroDetails(hero, gameState);
         grid.appendChild(card);
     });
 }
 
-function createHeroCard(hero) {
+function createHeroCard(hero, inTeam = false) {
     const card = document.createElement('div');
     card.className = 'hero-card cursor-pointer group';
     card.setAttribute('data-rarity', hero.rarity);
 
     const elColor = ELEMENT_COLORS[hero.element] || ELEMENT_COLORS['Fire'];
     const pw = hero.getPower();
+    const hasEquip = Object.values(hero.equipment).some(Boolean);
+    const classEmoji = { 'DPS (Single)':'⚔️', 'DPS (AoE)':'💥', 'Healer':'💚', 'Buffer':'⬆️', 'Tank':'🛡️' };
 
     const imgContainer = document.createElement('div');
     imgContainer.className = 'relative overflow-hidden aspect-[3/4]';
@@ -473,41 +536,78 @@ function createHeroCard(hero) {
     img.alt = hero.name;
     img.onerror = function() {
         const ph = document.createElement('div');
-        ph.className = `w-full h-full aspect-[3/4] bg-gradient-to-br ${elColor.from} ${elColor.to} flex items-center justify-center text-white text-4xl font-heading font-bold opacity-90 group-hover:scale-110 transition-transform duration-500`;
+        ph.className = `w-full h-full bg-gradient-to-br ${elColor.from} ${elColor.to} flex items-center justify-center text-white text-4xl font-heading font-bold group-hover:scale-105 transition-transform duration-300`;
         ph.textContent = hero.name.substring(0, 2).toUpperCase();
         this.replaceWith(ph);
     };
     imgContainer.appendChild(img);
 
-    const starBadge = document.createElement('div');
-    starBadge.className = 'absolute top-1.5 left-1.5 text-[10px] text-yellow-400 font-bold drop-shadow';
-    starBadge.textContent = '⭐'.repeat(Math.min(hero.stars, 5));
-    imgContainer.appendChild(starBadge);
+    // Hover overlay with stats preview
+    const hoverOverlay = document.createElement('div');
+    hoverOverlay.className = 'absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-1 text-white text-[10px] font-bold';
+    hoverOverlay.innerHTML = `
+        <div class="flex gap-2">
+            <span>⚔️${hero.atk}</span>
+            <span>🛡️${hero.def}</span>
+            <span>💨${hero.spd}</span>
+        </div>
+        <div class="text-[9px] opacity-80">${hero.ultimate?.name || ''}</div>
+        <div class="mt-1 bg-white/20 px-2 py-0.5 rounded text-[8px]">Tap to view</div>
+    `;
+    imgContainer.appendChild(hoverOverlay);
 
+    // Rarity badge
     const rarBadge = document.createElement('div');
     rarBadge.className = `absolute top-1.5 right-1.5 badge-${hero.rarity} text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow`;
     rarBadge.textContent = hero.rarity;
     imgContainer.appendChild(rarBadge);
 
+    // Element badge
+    const elBadge = document.createElement('div');
+    elBadge.className = 'absolute top-1.5 left-1.5 text-sm';
+    elBadge.textContent = elColor.emoji;
+    imgContainer.appendChild(elBadge);
+
+    // In-team indicator
+    if (inTeam) {
+        const teamBadge = document.createElement('div');
+        teamBadge.className = 'absolute bottom-0 inset-x-0 bg-blue-500/90 text-white text-[9px] font-bold text-center py-0.5';
+        teamBadge.textContent = '✓ IN TEAM';
+        imgContainer.appendChild(teamBadge);
+    }
+
     // Equipment indicator
-    const hasEquip = Object.values(hero.equipment).some(Boolean);
     if (hasEquip) {
-        const equip = document.createElement('div');
-        equip.className = 'absolute bottom-1.5 left-1.5 bg-amber-500 text-white text-[8px] font-bold px-1 py-0.5 rounded';
-        equip.innerHTML = '⚔️';
-        imgContainer.appendChild(equip);
+        const equipBadge = document.createElement('div');
+        equipBadge.className = 'absolute top-7 right-1.5 bg-amber-500/90 text-white text-[8px] font-bold px-1 py-0.5 rounded';
+        equipBadge.textContent = '⚔️';
+        imgContainer.appendChild(equipBadge);
+    }
+
+    // Star row
+    const starRow = document.createElement('div');
+    starRow.className = 'absolute bottom-0 left-0 right-0 flex justify-center pb-1 gap-0.5';
+    if (!inTeam) {
+        for (let i = 0; i < Math.min(hero.stars, 5); i++) {
+            const star = document.createElement('span');
+            star.className = 'text-yellow-400 text-[8px]';
+            star.textContent = '★';
+            starRow.appendChild(star);
+        }
+        imgContainer.appendChild(starRow);
     }
 
     card.appendChild(imgContainer);
 
     const info = document.createElement('div');
-    info.className = 'p-2.5 bg-white';
+    info.className = 'px-2 py-2 bg-white';
     info.innerHTML = `
-        <div class="font-bold text-slate-800 text-sm truncate">${hero.name}</div>
-        <div class="flex justify-between items-center mt-1">
-            <div class="text-[10px] text-slate-500">Lv.${hero.level} · ${hero.class}</div>
-            <div class="text-[9px] font-bold text-amber-600 bg-amber-50 px-1 rounded">PW:${formatNumber(pw)}</div>
+        <div class="font-bold text-slate-800 text-xs truncate leading-tight">${hero.name}</div>
+        <div class="flex items-center justify-between mt-1 gap-1">
+            <div class="text-[10px] text-slate-400">Lv.${hero.level}</div>
+            <div class="text-[9px] text-slate-500">${classEmoji[hero.class] || ''} ${hero.class.replace('DPS ','').replace('(','').replace(')','')}</div>
         </div>
+        <div class="mt-1 text-[9px] font-bold text-amber-600">⚡ ${formatNumber(pw)}</div>
     `;
     card.appendChild(info);
 
@@ -800,6 +900,14 @@ function renderProfile(gameState) {
                         <input type="file" accept=".json" class="hidden" onchange="importSave(this)">
                     </label>
                 </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide">Help & Tutorial</h3>
+                <p class="text-xs text-slate-500 mb-3">New to the game? Replay the interactive tutorial to learn all the systems.</p>
+                <button class="btn btn-secondary w-full text-sm" onclick="if(typeof startTutorial==='function') startTutorial(true)">
+                    <i class="fa-solid fa-graduation-cap mr-1"></i> Replay Tutorial
+                </button>
             </div>
 
             <div class="bg-red-50 rounded-xl border border-red-100 p-5">

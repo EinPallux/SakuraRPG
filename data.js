@@ -200,42 +200,165 @@ const HEROES_DATABASE = [
 // ===========================
 
 const ENEMIES_DATABASE = [
-    // Tier 1 (Waves 1-10) — Weak, tutorial-friendly
-    { id: 'e001', name: 'Slime', element: 'Water', baseStats: { hp: 150, atk: 20, def: 10, spd: 88 }, reward: { gold: 15 } },
-    { id: 'e002', name: 'Fire Imp', element: 'Fire', baseStats: { hp: 180, atk: 26, def: 12, spd: 96 }, reward: { gold: 18 } },
-    { id: 'e003', name: 'Wind Wisp', element: 'Wind', baseStats: { hp: 145, atk: 24, def: 8, spd: 112 }, reward: { gold: 16 } },
-    { id: 'e004', name: 'Shadow Bat', element: 'Dark', baseStats: { hp: 165, atk: 30, def: 10, spd: 118 }, reward: { gold: 20 } },
-    { id: 'e005', name: 'Forest Sprite', element: 'Wind', baseStats: { hp: 155, atk: 22, def: 14, spd: 100 }, reward: { gold: 17 } },
-    { id: 'e028', name: 'Kitsune Pup', element: 'Light', baseStats: { hp: 170, atk: 25, def: 11, spd: 105 }, reward: { gold: 19 } },
+    // ─────────────────────────────────────────────
+    // TIER 1 — Waves 1-10 · Tutorial-friendly
+    // ─────────────────────────────────────────────
+    { id: 'e001', name: 'Blue Slime',      emoji: '🔵', element: 'Water', behavior: 'defensive',
+      baseStats: { hp: 150, atk: 20, def: 10, spd: 88 },  reward: { gold: 15 } },
+    { id: 'e002', name: 'Fire Imp',        emoji: '👺', element: 'Fire',  behavior: 'aggressive',
+      baseStats: { hp: 180, atk: 26, def: 12, spd: 96 },  reward: { gold: 18 } },
+    { id: 'e003', name: 'Wind Wisp',       emoji: '💨', element: 'Wind',  behavior: 'evasive',
+      baseStats: { hp: 145, atk: 24, def: 8,  spd: 112 }, reward: { gold: 16 } },
+    { id: 'e004', name: 'Shadow Bat',      emoji: '🦇', element: 'Dark',  behavior: 'aggressive',
+      baseStats: { hp: 165, atk: 30, def: 10, spd: 118 }, reward: { gold: 20 } },
+    { id: 'e005', name: 'Forest Sprite',   emoji: '🌿', element: 'Wind',  behavior: 'support',
+      baseStats: { hp: 155, atk: 22, def: 14, spd: 100 }, reward: { gold: 17 }, special: ['healer'] },
+    { id: 'e028', name: 'Kitsune Pup',     emoji: '🦊', element: 'Light', behavior: 'evasive',
+      baseStats: { hp: 170, atk: 25, def: 11, spd: 105 }, reward: { gold: 19 } },
 
-    // Tier 2 (Waves 11-25) — Medium difficulty
-    { id: 'e006', name: 'Oni Warrior', element: 'Fire', baseStats: { hp: 420, atk: 58, def: 32, spd: 102 }, reward: { gold: 45 } },
-    { id: 'e007', name: 'Ice Golem', element: 'Water', baseStats: { hp: 640, atk: 42, def: 55, spd: 78 }, reward: { gold: 50 } },
-    { id: 'e009', name: 'Void Wraith', element: 'Dark', baseStats: { hp: 370, atk: 68, def: 26, spd: 124 }, reward: { gold: 48 } },
-    { id: 'e021', name: 'Thunder Wolf', element: 'Wind', baseStats: { hp: 400, atk: 62, def: 28, spd: 130 }, reward: { gold: 52 } },
-    { id: 'e022', name: 'Sea Serpent', element: 'Water', baseStats: { hp: 580, atk: 50, def: 45, spd: 90 }, reward: { gold: 46 } },
-    { id: 'e023', name: 'Cursed Oni', element: 'Dark', baseStats: { hp: 450, atk: 70, def: 30, spd: 108 }, reward: { gold: 55 } },
+    // New Tier 1 additions
+    { id: 'e050', name: 'Poison Slime',    emoji: '🟢', element: 'Wind',  behavior: 'technical',
+      baseStats: { hp: 130, atk: 18, def: 8,  spd: 80 },  reward: { gold: 16 }, special: ['poisoner'] },
+    { id: 'e051', name: 'Sand Scorpion',   emoji: '🦂', element: 'Fire',  behavior: 'technical',
+      baseStats: { hp: 160, atk: 28, def: 14, spd: 92 },  reward: { gold: 18 }, special: ['poisoner'] },
+    { id: 'e052', name: 'Ice Fairy',       emoji: '❄️', element: 'Water', behavior: 'technical',
+      baseStats: { hp: 140, atk: 22, def: 9,  spd: 108 }, reward: { gold: 17 }, special: ['stunner'] },
+    { id: 'e053', name: 'Kodama',          emoji: '🌳', element: 'Wind',  behavior: 'support',
+      baseStats: { hp: 190, atk: 15, def: 18, spd: 75 },  reward: { gold: 15 }, special: ['healer'] },
+    { id: 'e054', name: 'Ghost Lantern',   emoji: '🏮', element: 'Dark',  behavior: 'evasive',
+      baseStats: { hp: 145, atk: 32, def: 6,  spd: 122 }, reward: { gold: 21 } },
+    { id: 'e055', name: 'Tiny Oni',        emoji: '👹', element: 'Fire',  behavior: 'berserker',
+      baseStats: { hp: 200, atk: 24, def: 16, spd: 85 },  reward: { gold: 18 } },
 
-    // Tier 3 (Waves 26-40) — Hard
-    { id: 'e011', name: 'Demon Samurai', element: 'Dark', baseStats: { hp: 840, atk: 115, def: 62, spd: 128 }, reward: { gold: 90 } },
-    { id: 'e012', name: 'Flame Dragon', element: 'Fire', baseStats: { hp: 1260, atk: 135, def: 84, spd: 112 }, reward: { gold: 110 } },
-    { id: 'e024', name: 'Storm Shogun', element: 'Wind', baseStats: { hp: 900, atk: 125, def: 70, spd: 135 }, reward: { gold: 105 } },
-    { id: 'e025', name: 'Frost Lich', element: 'Water', baseStats: { hp: 780, atk: 130, def: 75, spd: 118 }, reward: { gold: 95 } },
-    { id: 'e026', name: 'Dark Paladin', element: 'Dark', baseStats: { hp: 1100, atk: 110, def: 90, spd: 100 }, reward: { gold: 115 } },
-    { id: 'e027', name: 'Solar Ifrit', element: 'Light', baseStats: { hp: 950, atk: 140, def: 68, spd: 120 }, reward: { gold: 120 } },
+    // ─────────────────────────────────────────────
+    // TIER 2 — Waves 11-25 · Medium difficulty
+    // ─────────────────────────────────────────────
+    { id: 'e006', name: 'Oni Warrior',     emoji: '👹', element: 'Fire',  behavior: 'berserker',
+      baseStats: { hp: 420, atk: 58, def: 32, spd: 102 }, reward: { gold: 45 } },
+    { id: 'e007', name: 'Ice Golem',       emoji: '🧊', element: 'Water', behavior: 'defensive',
+      baseStats: { hp: 640, atk: 42, def: 55, spd: 78 },  reward: { gold: 50 }, special: ['shielder'] },
+    { id: 'e009', name: 'Void Wraith',     emoji: '👻', element: 'Dark',  behavior: 'aggressive',
+      baseStats: { hp: 370, atk: 68, def: 26, spd: 124 }, reward: { gold: 48 }, special: ['stunner'] },
+    { id: 'e021', name: 'Thunder Wolf',    emoji: '🐺', element: 'Wind',  behavior: 'aggressive',
+      baseStats: { hp: 400, atk: 62, def: 28, spd: 130 }, reward: { gold: 52 } },
+    { id: 'e022', name: 'Sea Serpent',     emoji: '🐍', element: 'Water', behavior: 'technical',
+      baseStats: { hp: 580, atk: 50, def: 45, spd: 90 },  reward: { gold: 46 }, special: ['poisoner'] },
+    { id: 'e023', name: 'Cursed Oni',      emoji: '👺', element: 'Dark',  behavior: 'technical',
+      baseStats: { hp: 450, atk: 70, def: 30, spd: 108 }, reward: { gold: 55 }, special: ['poisoner'] },
 
-    // Tier 4 (Waves 41+) — Elite
-    { id: 'e030', name: 'Void Emperor', element: 'Dark', baseStats: { hp: 1600, atk: 180, def: 110, spd: 140 }, reward: { gold: 180 } },
-    { id: 'e031', name: 'Ancient Dragon', element: 'Fire', baseStats: { hp: 2000, atk: 170, def: 130, spd: 120 }, reward: { gold: 200 } },
-    { id: 'e032', name: 'Celestial Serpent', element: 'Light', baseStats: { hp: 1800, atk: 175, def: 120, spd: 132 }, reward: { gold: 190 } },
-    { id: 'e033', name: 'Abyssal Horror', element: 'Dark', baseStats: { hp: 1700, atk: 185, def: 105, spd: 145 }, reward: { gold: 185 } },
+    // New Tier 2 additions
+    { id: 'e056', name: 'Shadow Ninja',    emoji: '🥷', element: 'Dark',  behavior: 'evasive',
+      baseStats: { hp: 340, atk: 78, def: 20, spd: 148 }, reward: { gold: 58 }, special: ['stunner'] },
+    { id: 'e057', name: 'Demon Kunoichi',  emoji: '💃', element: 'Fire',  behavior: 'evasive',
+      baseStats: { hp: 360, atk: 72, def: 22, spd: 142 }, reward: { gold: 55 }, special: ['poisoner'] },
+    { id: 'e058', name: 'Iron Golem Mk2', emoji: '🤖', element: 'Light', behavior: 'defensive',
+      baseStats: { hp: 720, atk: 45, def: 68, spd: 65 },  reward: { gold: 60 }, special: ['shielder'] },
+    { id: 'e059', name: 'Yuki-onna',       emoji: '❄️', element: 'Water', behavior: 'technical',
+      baseStats: { hp: 410, atk: 65, def: 35, spd: 115 }, reward: { gold: 52 }, special: ['stunner'] },
+    { id: 'e060', name: 'Tengu Warrior',   emoji: '🪶', element: 'Wind',  behavior: 'aggressive',
+      baseStats: { hp: 390, atk: 70, def: 28, spd: 138 }, reward: { gold: 54 } },
+    { id: 'e061', name: 'Kappa Elder',     emoji: '🐢', element: 'Water', behavior: 'support',
+      baseStats: { hp: 550, atk: 48, def: 50, spd: 82 },  reward: { gold: 50 }, special: ['healer'] },
+    { id: 'e062', name: 'Metal Slime',     emoji: '⚪', element: 'Light', behavior: 'evasive',
+      baseStats: { hp: 180, atk: 30, def: 80, spd: 155 }, reward: { gold: 120 } }, // rare, high def, flees fast
+    { id: 'e063', name: 'Ronin',           emoji: '⚔️', element: 'Wind',  behavior: 'berserker',
+      baseStats: { hp: 430, atk: 75, def: 25, spd: 120 }, reward: { gold: 58 } },
 
-    // Bosses (every 10 waves)
-    { id: 'e016', name: 'Infernal Overlord', element: 'Fire', baseStats: { hp: 2800, atk: 190, def: 105, spd: 132 }, reward: { gold: 350 }, isBoss: true },
-    { id: 'e017', name: 'Leviathan', element: 'Water', baseStats: { hp: 3400, atk: 168, def: 128, spd: 118 }, reward: { gold: 400 }, isBoss: true },
-    { id: 'e018', name: 'Nightmare Shogun', element: 'Dark', baseStats: { hp: 3000, atk: 200, def: 118, spd: 140 }, reward: { gold: 450 }, isBoss: true },
-    { id: 'e019', name: 'Celestial Dragon', element: 'Light', baseStats: { hp: 4000, atk: 185, def: 140, spd: 128 }, reward: { gold: 500 }, isBoss: true },
-    { id: 'e020', name: 'Chaos Sovereign', element: 'Dark', baseStats: { hp: 5000, atk: 220, def: 160, spd: 150 }, reward: { gold: 700 }, isBoss: true }
+    // ─────────────────────────────────────────────
+    // TIER 3 — Waves 26-40 · Hard
+    // ─────────────────────────────────────────────
+    { id: 'e011', name: 'Demon Samurai',   emoji: '⛩️', element: 'Dark',  behavior: 'aggressive',
+      baseStats: { hp: 840, atk: 115, def: 62, spd: 128 }, reward: { gold: 90 } },
+    { id: 'e012', name: 'Flame Dragon',    emoji: '🐉', element: 'Fire',  behavior: 'berserker',
+      baseStats: { hp: 1260, atk: 135, def: 84, spd: 112 }, reward: { gold: 110 } },
+    { id: 'e024', name: 'Storm Shogun',    emoji: '🌪️', element: 'Wind',  behavior: 'aggressive',
+      baseStats: { hp: 900, atk: 125, def: 70, spd: 135 }, reward: { gold: 105 } },
+    { id: 'e025', name: 'Frost Lich',      emoji: '💀', element: 'Water', behavior: 'technical',
+      baseStats: { hp: 780, atk: 130, def: 75, spd: 118 }, reward: { gold: 95 }, special: ['stunner', 'poisoner'] },
+    { id: 'e026', name: 'Dark Paladin',    emoji: '🛡️', element: 'Dark',  behavior: 'defensive',
+      baseStats: { hp: 1100, atk: 110, def: 90, spd: 100 }, reward: { gold: 115 }, special: ['shielder'] },
+    { id: 'e027', name: 'Solar Ifrit',     emoji: '☀️', element: 'Light', behavior: 'berserker',
+      baseStats: { hp: 950, atk: 140, def: 68, spd: 120 }, reward: { gold: 120 } },
+
+    // New Tier 3 additions
+    { id: 'e064', name: 'Corrupted Shrine Maiden', emoji: '⛩️', element: 'Dark', behavior: 'support',
+      baseStats: { hp: 760, atk: 100, def: 58, spd: 125 }, reward: { gold: 100 }, special: ['healer', 'poisoner'] },
+    { id: 'e065', name: 'Wyvern',          emoji: '🐲', element: 'Wind',  behavior: 'aggressive',
+      baseStats: { hp: 1050, atk: 128, def: 72, spd: 130 }, reward: { gold: 108 } },
+    { id: 'e066', name: 'Void Assassin',   emoji: '🗡️', element: 'Dark',  behavior: 'evasive',
+      baseStats: { hp: 680, atk: 145, def: 40, spd: 155 }, reward: { gold: 115 }, special: ['stunner'] },
+    { id: 'e067', name: 'Fallen Paladin',  emoji: '⚜️', element: 'Light', behavior: 'defensive',
+      baseStats: { hp: 1150, atk: 108, def: 92, spd: 95 }, reward: { gold: 112 }, special: ['shielder'] },
+    { id: 'e068', name: 'Storm Drake',     emoji: '🌩️', element: 'Wind',  behavior: 'berserker',
+      baseStats: { hp: 880, atk: 132, def: 60, spd: 140 }, reward: { gold: 105 } },
+    { id: 'e069', name: 'Succubus',        emoji: '😈', element: 'Dark',  behavior: 'technical',
+      baseStats: { hp: 820, atk: 120, def: 55, spd: 132 }, reward: { gold: 110 }, special: ['stunner', 'poisoner'] },
+    { id: 'e070', name: 'Arcane Automaton',emoji: '🤖', element: 'Light', behavior: 'technical',
+      baseStats: { hp: 970, atk: 112, def: 85, spd: 105 }, reward: { gold: 115 }, special: ['stunner'] },
+    { id: 'e071', name: 'Blade Dancer',    emoji: '💫', element: 'Wind',  behavior: 'evasive',
+      baseStats: { hp: 720, atk: 138, def: 45, spd: 148 }, reward: { gold: 100 } },
+    { id: 'e072', name: 'Phantom Samurai', emoji: '👘', element: 'Dark',  behavior: 'berserker',
+      baseStats: { hp: 860, atk: 122, def: 66, spd: 130 }, reward: { gold: 108 } },
+
+    // ─────────────────────────────────────────────
+    // TIER 4 — Waves 41-60 · Elite
+    // ─────────────────────────────────────────────
+    { id: 'e030', name: 'Void Emperor',    emoji: '👑', element: 'Dark',  behavior: 'berserker',
+      baseStats: { hp: 1600, atk: 180, def: 110, spd: 140 }, reward: { gold: 180 }, special: ['stunner', 'poisoner'] },
+    { id: 'e031', name: 'Ancient Dragon',  emoji: '🐉', element: 'Fire',  behavior: 'berserker',
+      baseStats: { hp: 2000, atk: 170, def: 130, spd: 120 }, reward: { gold: 200 } },
+    { id: 'e032', name: 'Celestial Serpent', emoji: '🌟', element: 'Light', behavior: 'technical',
+      baseStats: { hp: 1800, atk: 175, def: 120, spd: 132 }, reward: { gold: 190 }, special: ['stunner'] },
+    { id: 'e033', name: 'Abyssal Horror',  emoji: '👁️', element: 'Dark',  behavior: 'aggressive',
+      baseStats: { hp: 1700, atk: 185, def: 105, spd: 145 }, reward: { gold: 185 } },
+
+    // New Tier 4 additions
+    { id: 'e073', name: 'Crystal Dragon',  emoji: '💎', element: 'Water', behavior: 'defensive',
+      baseStats: { hp: 1850, atk: 165, def: 145, spd: 110 }, reward: { gold: 195 }, special: ['shielder'] },
+    { id: 'e074', name: 'Void Priestess',  emoji: '🌑', element: 'Dark',  behavior: 'technical',
+      baseStats: { hp: 1550, atk: 188, def: 98,  spd: 150 }, reward: { gold: 188 }, special: ['poisoner', 'stunner', 'healer'] },
+    { id: 'e075', name: 'Legendary Oni',   emoji: '👹', element: 'Fire',  behavior: 'berserker',
+      baseStats: { hp: 1920, atk: 195, def: 115, spd: 135 }, reward: { gold: 210 } },
+    { id: 'e076', name: 'Dark Sovereign',  emoji: '🔮', element: 'Dark',  behavior: 'support',
+      baseStats: { hp: 1680, atk: 172, def: 125, spd: 128 }, reward: { gold: 200 }, special: ['healer', 'shielder'] },
+
+    // ─────────────────────────────────────────────
+    // TIER 5 — Waves 61+ · Nightmare
+    // ─────────────────────────────────────────────
+    { id: 'e077', name: 'Chaos Dragon',    emoji: '🌀', element: 'Dark',  behavior: 'berserker',
+      baseStats: { hp: 2800, atk: 240, def: 160, spd: 155 }, reward: { gold: 320 }, special: ['stunner'] },
+    { id: 'e078', name: 'Primordial Oni',  emoji: '🔴', element: 'Fire',  behavior: 'aggressive',
+      baseStats: { hp: 3000, atk: 255, def: 145, spd: 145 }, reward: { gold: 340 } },
+    { id: 'e079', name: 'Eternal Wraith',  emoji: '💀', element: 'Dark',  behavior: 'technical',
+      baseStats: { hp: 2600, atk: 245, def: 155, spd: 165 }, reward: { gold: 330 }, special: ['poisoner', 'stunner'] },
+
+    // ─────────────────────────────────────────────
+    // BOSSES — Every 10 waves
+    // ─────────────────────────────────────────────
+    { id: 'e016', name: 'Infernal Overlord', emoji: '🔥', element: 'Fire',  behavior: 'berserker',
+      baseStats: { hp: 2800, atk: 190, def: 105, spd: 132 }, reward: { gold: 350 }, isBoss: true,
+      special: ['poisoner'] },
+    { id: 'e017', name: 'Leviathan',        emoji: '🌊', element: 'Water', behavior: 'technical',
+      baseStats: { hp: 3400, atk: 168, def: 128, spd: 118 }, reward: { gold: 400 }, isBoss: true,
+      special: ['stunner', 'poisoner'] },
+    { id: 'e018', name: 'Nightmare Shogun', emoji: '⛩️', element: 'Dark',  behavior: 'aggressive',
+      baseStats: { hp: 3000, atk: 200, def: 118, spd: 140 }, reward: { gold: 450 }, isBoss: true,
+      special: ['stunner'] },
+    { id: 'e019', name: 'Celestial Dragon', emoji: '🐉', element: 'Light', behavior: 'defensive',
+      baseStats: { hp: 4000, atk: 185, def: 140, spd: 128 }, reward: { gold: 500 }, isBoss: true,
+      special: ['shielder', 'healer'] },
+    { id: 'e020', name: 'Chaos Sovereign',  emoji: '👑', element: 'Dark',  behavior: 'berserker',
+      baseStats: { hp: 5000, atk: 220, def: 160, spd: 150 }, reward: { gold: 700 }, isBoss: true,
+      special: ['poisoner', 'stunner', 'shielder'] },
+    { id: 'e080', name: 'Phantom Empress',  emoji: '👸', element: 'Dark',  behavior: 'technical',
+      baseStats: { hp: 4500, atk: 210, def: 148, spd: 145 }, reward: { gold: 600 }, isBoss: true,
+      special: ['stunner', 'healer', 'poisoner'] },
+    { id: 'e081', name: 'Storm Sovereign',  emoji: '🌪️', element: 'Wind',  behavior: 'aggressive',
+      baseStats: { hp: 3800, atk: 230, def: 132, spd: 158 }, reward: { gold: 550 }, isBoss: true,
+      special: ['stunner'] },
+    { id: 'e082', name: 'Ancient Serpent',  emoji: '🐍', element: 'Water', behavior: 'berserker',
+      baseStats: { hp: 6000, atk: 200, def: 180, spd: 135 }, reward: { gold: 800 }, isBoss: true,
+      special: ['poisoner', 'shielder'] }
 ];
 
 // ===========================
