@@ -585,3 +585,105 @@ const GACHA_RATES = {
 // Soft pity starts at this pull count and increases SSR chance
 const SOFT_PITY_START = 40;
 const HARD_PITY = 50;
+
+// ===========================
+// DUNGEON DATABASE
+// ===========================
+
+const DUNGEONS_DATABASE = [
+    {
+        id: 'dungeon_fire',
+        name: 'Ember Sanctum',
+        element: 'Fire',
+        icon: '🔥',
+        desc: 'An ancient temple consumed by eternal flames. Fire imps and oni guard sacred relics within its burning halls.',
+        difficulty: 'Easy',
+        dailyAttempts: 3,
+        floors: [
+            { enemies: ['e002', 'e051'],        wave: 5  },
+            { enemies: ['e006', 'e055', 'e057'], wave: 10 },
+            { enemies: ['e016'],                 wave: 12 }
+        ],
+        rewards: {
+            gold: 800,
+            materials: [{ id: 'm001', qty: 8 }, { id: 'm006', qty: 3 }],
+            bonusMaterial: { id: 'm002', qty: 2, chance: 0.5 }
+        }
+    },
+    {
+        id: 'dungeon_water',
+        name: 'Tidal Grotto',
+        element: 'Water',
+        icon: '🌊',
+        desc: 'A submerged cavern echoing with roaring tides. Ice fairies and sea serpents lurk in the crystalline depths.',
+        difficulty: 'Easy',
+        dailyAttempts: 3,
+        floors: [
+            { enemies: ['e001', 'e052'],        wave: 5  },
+            { enemies: ['e007', 'e022', 'e059'], wave: 10 },
+            { enemies: ['e017'],                 wave: 12 }
+        ],
+        rewards: {
+            gold: 800,
+            materials: [{ id: 'm001', qty: 8 }, { id: 'm007', qty: 3 }],
+            bonusMaterial: { id: 'm002', qty: 2, chance: 0.5 }
+        }
+    },
+    {
+        id: 'dungeon_wind',
+        name: 'Gale Spire',
+        element: 'Wind',
+        icon: '🌪️',
+        desc: 'A fortress at the peak of an eternal storm. Tengu warriors and wyverns patrol its cloud-shrouded corridors.',
+        difficulty: 'Medium',
+        dailyAttempts: 2,
+        floors: [
+            { enemies: ['e021', 'e060', 'e063'],  wave: 15 },
+            { enemies: ['e024', 'e065', 'e068'],  wave: 22 },
+            { enemies: ['e081'],                   wave: 25 }
+        ],
+        rewards: {
+            gold: 2200,
+            materials: [{ id: 'm002', qty: 5 }, { id: 'm008', qty: 4 }, { id: 'm003', qty: 2 }],
+            bonusMaterial: { id: 'm005', qty: 1, chance: 0.40 }
+        }
+    },
+    {
+        id: 'dungeon_light',
+        name: 'Radiant Shrine',
+        element: 'Light',
+        icon: '✨',
+        desc: 'A holy sanctuary where light and shadow wage eternal war. Celestial guardians test only the most worthy challengers.',
+        difficulty: 'Medium',
+        dailyAttempts: 2,
+        floors: [
+            { enemies: ['e028', 'e058', 'e062'],  wave: 15 },
+            { enemies: ['e026', 'e067', 'e070'],  wave: 22 },
+            { enemies: ['e019'],                   wave: 25 }
+        ],
+        rewards: {
+            gold: 2200,
+            materials: [{ id: 'm002', qty: 5 }, { id: 'm009', qty: 4 }, { id: 'm003', qty: 2 }],
+            bonusMaterial: { id: 'm013', qty: 1, chance: 0.40 }
+        }
+    },
+    {
+        id: 'dungeon_dark',
+        name: 'Shadow Abyss',
+        element: 'Dark',
+        icon: '🌑',
+        desc: 'An endless pit of primordial darkness. Only the most powerful teams can survive its three harrowing trials.',
+        difficulty: 'Hard',
+        dailyAttempts: 1,
+        floors: [
+            { enemies: ['e011', 'e066', 'e072'],  wave: 30 },
+            { enemies: ['e030', 'e033', 'e074'],  wave: 40 },
+            { enemies: ['e020'],                   wave: 45 }
+        ],
+        rewards: {
+            gold: 5500,
+            materials: [{ id: 'm003', qty: 5 }, { id: 'm010', qty: 5 }, { id: 'm004', qty: 2 }],
+            bonusMaterial: { id: 'm012', qty: 1, chance: 0.55 }
+        }
+    }
+];
