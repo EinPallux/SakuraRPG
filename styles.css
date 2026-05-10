@@ -2373,3 +2373,164 @@ html {
     transition: all 0.2s;
 }
 .merchant-leave-btn:hover { background: #f1f5f9; border-color: #cbd5e1; color: #1e293b; }
+/* =========================================
+   ELEMENTAL DUNGEONS
+   ========================================= */
+
+/* Dungeon selection card */
+.dungeon-card {
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s, transform 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.dungeon-card:hover {
+    box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+}
+
+.dungeon-card-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* Enter / exhausted button */
+.dungeon-enter-btn {
+    width: 100%;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: auto;
+}
+
+.dungeon-enter-btn.available {
+    background: linear-gradient(135deg, var(--el-accent, #8b5cf6), #7c3aed);
+    color: #fff;
+}
+
+.dungeon-enter-btn.available:hover {
+    filter: brightness(1.08);
+}
+
+.dungeon-enter-btn.exhausted {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Reward tags */
+.dungeon-reward-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+}
+
+.dungeon-reward-tag.gold   { background: #fffbeb; color: #b45309; }
+.dungeon-reward-tag.mat    { background: #eff6ff; color: #1d4ed8; }
+.dungeon-reward-tag.bonus  { background: #faf5ff; color: #6d28d9; }
+
+/* Floor progress dots */
+.dungeon-floor-dot {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 2.5px solid #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s;
+}
+
+.dungeon-floor-dot.current {
+    border-color: #8b5cf6;
+    background: #8b5cf6;
+    color: #fff;
+    box-shadow: 0 0 12px #8b5cf666;
+}
+
+.dungeon-floor-dot.done {
+    border-color: #10b981;
+    background: #10b981;
+    color: #fff;
+}
+
+.dungeon-floor-connector {
+    flex: 1;
+    height: 2px;
+    background: #e2e8f0;
+    min-width: 1.5rem;
+    max-width: 4rem;
+}
+
+/* Action box */
+.dungeon-action-box {
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* Fight button inside run */
+.dungeon-fight-btn {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    border-radius: 0.875rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(139,92,246,0.35);
+}
+
+.dungeon-fight-btn:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(139,92,246,0.45);
+}
+
+.dungeon-fight-btn:active {
+    transform: scale(0.98);
+}
+
+/* Pulsing animation for "battling" phase */
+.dungeon-pulse-ring {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--ring-color, #8b5cf6);
+    animation: dungeon-pulse 1s ease-in-out infinite;
+}
+
+.dungeon-pulse-ring:nth-child(3) {
+    animation-delay: 0.5s;
+}
+
+@keyframes dungeon-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.85); }
+    50%       { opacity: 1;   transform: scale(1.15); }
+}
