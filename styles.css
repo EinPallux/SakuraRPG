@@ -1455,6 +1455,925 @@ html {
 }
 
 /* =========================================
+   BATTLE ARENA v3 — COMPLETE REDESIGN
+   ========================================= */
+
+.battle-arena-v3 {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 0.875rem;
+    height: calc(100vh - 144px);
+    min-height: 560px;
+}
+
+@media (max-width: 1100px) {
+    .battle-arena-v3 { grid-template-columns: 1fr 240px; }
+}
+@media (max-width: 900px) {
+    .battle-arena-v3 { grid-template-columns: 1fr; }
+    .battle-right-panel { display: none; }
+}
+
+/* ── Battlefield card ── */
+.battle-field {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: white;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    position: relative;
+}
+
+/* ── Zone sections ── */
+.battle-field-zone {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 0;
+}
+
+.enemy-field-zone {
+    background: linear-gradient(170deg, #fff1f2 0%, #fff5f5 50%, #ffffff 100%);
+}
+
+.enemy-field-zone.boss-wave {
+    background: linear-gradient(170deg, #ffe4e6 0%, #fff0f0 60%, #ffffff 100%);
+    animation: boss-zone-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes boss-zone-pulse {
+    0%, 100% { background: linear-gradient(170deg, #ffe4e6 0%, #fff0f0 60%, #fff 100%); }
+    50%       { background: linear-gradient(170deg, #fecdd3 0%, #ffe4e6 60%, #fff 100%); }
+}
+
+.hero-field-zone {
+    background: linear-gradient(10deg, #eff6ff 0%, #f5f8ff 50%, #ffffff 100%);
+    border-top: 1px solid #e0eaff;
+}
+
+.field-zone-label {
+    padding: 0.45rem 1rem;
+    font-size: 0.55rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+.enemy-label { color: #f43f5e; }
+.hero-label  { color: #3b82f6; }
+
+/* ── Units row ── */
+.field-units-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.4rem 0.75rem 0.75rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+/* ── VS divider ── */
+.battle-vs-bar {
+    height: 3.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0.875rem;
+    background: #fafafa;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
+    position: relative;
+    gap: 0.75rem;
+}
+
+.battle-vs-line {
+    position: absolute;
+    inset: 50% 0 auto;
+    border-top: 1px dashed #e2e8f0;
+    pointer-events: none;
+}
+
+.battle-vs-center {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.battle-wave-badge {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 0.8rem;
+    color: #1e293b;
+    background: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    border: 1.5px solid #e2e8f0;
+}
+
+.battle-separator { color: #cbd5e1; font-size: 0.75rem; }
+
+.battle-turn-text {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    font-weight: 600;
+    background: white;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid #f1f5f9;
+}
+
+.battle-inline-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    margin-left: auto;
+    position: relative;
+}
+
+/* Control buttons in VS bar */
+.ctrl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    border: 1.5px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+.ctrl-btn:hover { border-color: #94a3b8; color: #1e293b; transform: translateY(-1px); }
+.ctrl-btn.auto-on    { border-color: var(--primary); color: #be185d; background: #fff0f6; }
+.ctrl-btn.speed-2x   { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
+.ctrl-btn.speed-3x   { border-color: #ef4444; color: #991b1b; background: #fef2f2; }
+.ctrl-btn.retreat-btn { border-color: #fecaca; color: #ef4444; }
+.ctrl-btn.retreat-btn:hover { background: #fef2f2; }
+
+/* ── Next wave overlay ── */
+.next-wave-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(6px);
+    z-index: 30;
+    animation: fadeInUp 0.3s ease;
+    border-radius: inherit;
+}
+.next-wave-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: white;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border: none;
+    border-radius: 1rem;
+    padding: 0.875rem 2.5rem;
+    cursor: pointer;
+    box-shadow: 0 8px 28px rgba(255,117,151,0.4);
+    animation: pulse-soft 1.5s infinite;
+    transition: transform 0.2s;
+}
+.next-wave-btn:hover { transform: scale(1.05); }
+
+/* ─────────────────────────────────────────
+   UNIT CARDS (redesigned)
+─────────────────────────────────────────── */
+
+.field-unit {
+    position: relative;
+    background: white;
+    border-radius: 0.875rem;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    border: 2px solid #f1f5f9;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+    user-select: none;
+}
+
+.enemy-unit {
+    width: 148px;
+    cursor: pointer;
+}
+.enemy-unit:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.hero-unit  { width: 160px; }
+.is-boss    { width: 190px; box-shadow: 0 0 0 2px #fca5a5, 0 4px 16px rgba(239,68,68,0.25); }
+
+/* Portrait area */
+.unit-portrait {
+    position: relative;
+    width: 100%;
+    height: 130px;
+    overflow: hidden;
+}
+.hero-unit .unit-portrait  { height: 148px; }
+.is-boss .unit-portrait    { height: 165px; }
+
+.unit-portrait-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    transition: transform 0.4s;
+    display: block;
+}
+.field-unit.active-turn .unit-portrait-img { transform: scale(1.08); }
+
+/* Emoji display */
+.unit-emoji-display {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4.5rem;
+    line-height: 1;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+    transition: transform 0.3s;
+}
+.field-unit.active-turn .unit-emoji-display { transform: scale(1.12) translateY(-3px); }
+.is-boss .unit-emoji-display { font-size: 5.25rem; }
+
+/* Name overlay */
+.unit-name-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+    padding: 1.5rem 0.5rem 0.35rem;
+}
+.unit-name {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: white;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.unit-subtitle {
+    font-size: 0.63rem;
+    color: rgba(255,255,255,0.72);
+    text-transform: capitalize;
+    margin-top: 1px;
+}
+
+/* Element badge */
+.unit-el-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    padding: 2px 5px;
+    border-radius: 999px;
+    font-size: 0.5rem;
+    font-weight: 700;
+    z-index: 5;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    background-blend-mode: overlay;
+}
+
+/* Boss badge */
+.unit-boss-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: linear-gradient(135deg, #dc2626, #9f1239);
+    color: white;
+    font-size: 0.5rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
+    border-radius: 999px;
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(220,38,38,0.5);
+}
+
+/* Target/focus ring */
+.unit-focus-ring {
+    position: absolute;
+    inset: 0;
+    border: 3px solid #ef4444;
+    border-radius: inherit;
+    pointer-events: none;
+    display: none;
+    justify-content: center;
+    align-items: flex-start;
+    z-index: 10;
+}
+.unit-focus-ring.visible { display: flex; }
+.unit-focus-ring-label {
+    background: #ef4444;
+    color: white;
+    font-size: 0.45rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 0 0 5px 5px;
+    letter-spacing: 0.06em;
+}
+
+/* Stats area */
+.unit-stats-area {
+    padding: 0.45rem 0.55rem 0.5rem;
+    background: white;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.unit-status-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    min-height: 10px;
+    margin-bottom: 1px;
+}
+
+.unit-stats-mini {
+    display: flex;
+    justify-content: space-between;
+    background: #f8fafc;
+    border-radius: 0.375rem;
+    padding: 3px 6px;
+    margin-bottom: 2px;
+    font-size: 0.63rem;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.unit-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 2px;
+}
+
+.unit-bar-track {
+    height: 5px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 3px;
+    position: relative;
+}
+
+.unit-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.unit-bar-fill.hp-high   { background: linear-gradient(90deg, #10b981, #34d399); }
+.unit-bar-fill.hp-mid    { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.unit-bar-fill.hp-low    { background: linear-gradient(90deg, #ef4444, #f87171); }
+.unit-bar-fill.mp        { background: linear-gradient(90deg, #6366f1, #818cf8); }
+.unit-bar-fill.ult-ready-fill { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.unit-bar-fill.shield-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: rgba(139,92,246,0.55);
+}
+
+/* Active turn glow */
+.field-unit.active-turn {
+    border-color: #fbbf24;
+    transform: translateY(-5px);
+    box-shadow: 0 0 0 2px #fbbf24, 0 10px 28px rgba(251,191,36,0.28);
+    z-index: 10;
+}
+
+/* Dead unit */
+.field-unit.dead {
+    filter: grayscale(1);
+    opacity: 0.4;
+    transform: scale(0.93);
+    pointer-events: none;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+/* Floating damage numbers (updated for new cards) */
+.damage-number {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    transform: translate(-50%, -50%);
+    font-weight: 900;
+    font-size: 1.75rem;
+    text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
+    pointer-events: none;
+    animation: popAndFloat 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    z-index: 50;
+    white-space: nowrap;
+}
+
+/* ─────────────────────────────────────────
+   BATTLE RIGHT PANEL
+─────────────────────────────────────────── */
+
+.battle-right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    height: 100%;
+    overflow: hidden;
+}
+
+.battle-log-panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #f1f5f9;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.battle-panel-card {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #f1f5f9;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.battle-panel-header {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.58rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #94a3b8;
+    border-bottom: 1px solid #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.combat-log-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.62rem;
+    font-family: monospace;
+    line-height: 1.65;
+}
+
+/* Log entry colors */
+.log-entry { padding: 0; }
+.log-info    { color: #3b82f6; font-weight: 700; }
+.log-success { color: #16a34a; }
+.log-warning { color: #d97706; }
+.log-special { color: #7c3aed; font-weight: 700; }
+.log-heal    { color: #059669; }
+.log-fire    { color: #ea580c; }
+.log-poison  { color: #9333ea; }
+.log-neutral { color: #64748b; }
+
+.clear-log-btn {
+    font-size: 0.5rem;
+    color: #cbd5e1;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+.clear-log-btn:hover { color: #94a3b8; }
+
+/* Ultimate items */
+.ult-item {
+    padding: 0.45rem 0.75rem;
+    border-top: 1px solid #f8fafc;
+    cursor: default;
+    transition: background 0.15s;
+}
+.ult-item:first-child { border-top: none; }
+.ult-item.ult-ready {
+    background: linear-gradient(90deg, #fffbeb, #fefce8);
+    cursor: pointer;
+}
+.ult-item.ult-ready:hover { background: linear-gradient(90deg, #fef3c7, #fffbeb); }
+
+/* ─────────────────────────────────────────
+   FORGE IMPROVEMENTS
+─────────────────────────────────────────── */
+
+.forge-tab-bar {
+    display: flex;
+    gap: 2px;
+    background: #f1f5f9;
+    border-radius: 0.75rem;
+    padding: 3px;
+}
+
+.forge-tab-btn {
+    flex: 1;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 0.6rem;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.forge-tab-btn.active {
+    background: white;
+    color: #1e293b;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.forge-recipe-card {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+.forge-recipe-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-2px); }
+
+.forge-recipe-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.forge-recipe-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.forge-rarity-bar { height: 3px; }
+.forge-rarity-N   { background: var(--rarity-n); }
+.forge-rarity-R   { background: var(--rarity-r); }
+.forge-rarity-SR  { background: var(--rarity-sr); }
+.forge-rarity-SSR { background: var(--rarity-ssr); }
+.forge-rarity-UR  { background: var(--rarity-ur); box-shadow: 0 0 6px var(--rarity-ur); }
+
+.forge-mat-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.forge-mat-tag.have { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.forge-mat-tag.need { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+.forge-craft-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.65rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.forge-craft-btn.craftable {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+}
+.forge-craft-btn.craftable:hover { filter: brightness(1.07); }
+.forge-craft-btn.not-craftable {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.material-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.75rem;
+    background: #f8fafc;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+.material-card.has-stock {
+    background: white;
+    border-color: #e2e8f0;
+}
+.material-card.has-stock:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* ─────────────────────────────────────────
+   TRAVELING SALESMAN / MERCHANT EVENT
+─────────────────────────────────────────── */
+
+.merchant-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+.merchant-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.merchant-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(6px);
+}
+
+.merchant-modal {
+    position: relative;
+    background: white;
+    border-radius: 1.5rem;
+    width: 100%;
+    max-width: 680px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+    overflow: hidden;
+    transform: scale(0.92) translateY(16px);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+.merchant-overlay.active .merchant-modal {
+    transform: scale(1) translateY(0);
+}
+
+.merchant-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.merchant-avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.3);
+    animation: merchant-bob 2s ease-in-out infinite;
+}
+
+@keyframes merchant-bob {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-4px); }
+}
+
+.merchant-title-block { flex: 1; }
+
+.merchant-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: white;
+}
+
+.merchant-subtitle {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.75);
+    margin-top: 2px;
+    font-style: italic;
+}
+
+.merchant-close-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+.merchant-close-btn:hover { background: rgba(255,255,255,0.3); }
+
+.merchant-rarity-banner {
+    background: linear-gradient(90deg, #f59e0b, #d97706, #f59e0b);
+    background-size: 200% 100%;
+    animation: shimmer-gold 2s linear infinite;
+    padding: 0.3rem 1.5rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: 0.1em;
+    text-align: center;
+}
+
+@keyframes shimmer-gold {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.merchant-items-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    overflow-y: auto;
+}
+
+.merchant-item-card {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 1rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s;
+    background: white;
+}
+.merchant-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.merchant-item-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+}
+
+.merchant-item-emoji {
+    font-size: 2rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 0.6rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    flex-shrink: 0;
+}
+
+.merchant-item-info { flex: 1; min-width: 0; }
+
+.merchant-item-name {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.merchant-rarity-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    margin-top: 2px;
+}
+
+.merchant-item-price {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    border-top: 1px solid #f8fafc;
+}
+
+.merchant-balance {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.merchant-buy-btn {
+    width: 100%;
+    padding: 0.55rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.merchant-buy-btn.can-afford {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+}
+.merchant-buy-btn.can-afford:hover { filter: brightness(1.08); }
+.merchant-buy-btn.cant-afford {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+.merchant-buy-btn.purchased {
+    background: #f0fdf4;
+    color: #16a34a;
+    cursor: default;
+}
+
+.merchant-footer {
+    padding: 0.875rem 1.25rem;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.merchant-leave-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 2rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.875rem;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.merchant-leave-btn:hover { background: #f1f5f9; border-color: #cbd5e1; color: #1e293b; }
+/* =========================================
    ELEMENTAL DUNGEONS
    ========================================= */
 
@@ -1614,4 +2533,237 @@ html {
 @keyframes dungeon-pulse {
     0%, 100% { opacity: 0.3; transform: scale(0.85); }
     50%       { opacity: 1;   transform: scale(1.15); }
+}
+
+/* =========================================
+   ALCHEMY LAB
+   ========================================= */
+
+.al-slots-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.al-slot {
+    flex: 1;
+    min-width: 160px;
+    max-width: 240px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+}
+
+.al-slot-empty {
+    border-style: dashed;
+    background: #f8fafc;
+}
+
+.al-slot-active {
+    border-color: #a78bfa;
+    background: linear-gradient(135deg, #faf5ff 0%, #f0fdf4 100%);
+}
+
+.al-slot-done {
+    border-color: #34d399;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.25);
+}
+
+.al-slot-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #334155;
+}
+
+.al-slot-timer {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #7c3aed;
+    margin-top: 0.25rem;
+}
+
+.al-slot-ready {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #059669;
+}
+
+.al-slot-yield {
+    font-size: 0.75rem;
+    color: #475569;
+}
+
+.al-slot-bar-track {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 0.35rem;
+}
+
+.al-slot-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    border-radius: 999px;
+    transition: width 1s linear;
+}
+
+.al-collect-btn {
+    margin-top: 0.5rem;
+    padding: 0.4rem 1rem;
+    background: linear-gradient(135deg, #059669, #34d399);
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.al-collect-btn:hover { opacity: 0.85; }
+
+.al-recipes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 0.85rem;
+}
+
+.al-recipe-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1rem;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.al-recipe-card.al-ready {
+    border-color: #a78bfa;
+    box-shadow: 0 2px 12px rgba(167, 139, 250, 0.2);
+}
+
+.al-recipe-card.al-locked {
+    opacity: 0.6;
+    background: #f8fafc;
+}
+
+.al-recipe-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.al-recipe-emoji {
+    font-size: 2rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.al-recipe-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.al-recipe-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.al-recipe-desc {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-top: 0.15rem;
+}
+
+.al-recipe-time {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #7c3aed;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.al-recipe-mats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+}
+
+.al-mat-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    border: 1.5px solid;
+}
+
+.al-mat-tag.have {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.al-mat-tag.need {
+    background: #fff1f2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+.al-mat-owned {
+    opacity: 0.6;
+    font-size: 0.65rem;
+}
+.al-mat-owned::before { content: '('; }
+.al-mat-owned::after  { content: ')'; }
+
+.al-arrow {
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+
+.al-mat-out {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #4f46e5;
+    background: #eef2ff;
+    border: 1.5px solid #a5b4fc;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+}
+
+.al-start-btn {
+    margin-top: 0.75rem;
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.al-can-start {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    color: white;
+}
+.al-can-start:hover { opacity: 0.85; }
+
+.al-cant-start {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
 }
