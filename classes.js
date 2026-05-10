@@ -551,6 +551,7 @@ class GameState {
         this.expedition = { isActive: true, startTime: Date.now(), lastClaimTime: Date.now() };
         this.achievements = {};
         this.dungeonData = {};
+        this.alchemySlots = Array(3).fill(null);
         this._startTime = Date.now();
     }
 
@@ -842,7 +843,8 @@ class GameState {
             lastQuestReset: this.lastQuestReset,
             achievements: this.achievements,
             autoCast: this.autoCast,
-            dungeonData: this.dungeonData
+            dungeonData: this.dungeonData,
+            alchemySlots: this.alchemySlots
         };
     }
 
@@ -874,6 +876,7 @@ class GameState {
         if (data.quests) { s.quests = data.quests; s.lastQuestReset = data.lastQuestReset || 0; }
         if (data.achievements) s.achievements = data.achievements;
         if (data.dungeonData) s.dungeonData = data.dungeonData;
+        if (data.alchemySlots) s.alchemySlots = data.alchemySlots;
         return s;
     }
 }
