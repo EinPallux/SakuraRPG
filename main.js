@@ -7,24 +7,20 @@ let gameState = null;
 
 const APP_NAVIGATION = [
     { id: 'battle',       label: 'Battle',      icon: 'fa-solid fa-khanda',              color: 'text-red-500' },
-    { id: 'garden',       label: 'Garden',       icon: 'fa-solid fa-leaf',                color: 'text-green-500' },
-    { id: 'forge',        label: 'Forge',        icon: 'fa-solid fa-hammer',              color: 'text-indigo-500' },
-    { id: 'dungeons',     label: 'Dungeons',     icon: 'fa-solid fa-dungeon',             color: 'text-violet-500' },
     { id: 'roster',       label: 'Heroes',       icon: 'fa-solid fa-users',               color: 'text-blue-500' },
     { id: 'gacha',        label: 'Summon',       icon: 'fa-solid fa-gem',                 color: 'text-pink-500' },
-    { id: 'skill-tree',   label: 'Yggdrasil',    icon: 'fa-solid fa-tree',                color: 'text-emerald-600' },
+    { id: 'dungeons',     label: 'Dungeons',     icon: 'fa-solid fa-dungeon',             color: 'text-violet-500' },
+    { id: 'alchemy',      label: 'Alchemy',      icon: 'fa-solid fa-flask-vial',          color: 'text-emerald-500' },
     { id: 'expedition',   label: 'Expedition',   icon: 'fa-solid fa-map-location-dot',    color: 'text-amber-600' },
+    { id: 'forge',        label: 'Forge',        icon: 'fa-solid fa-hammer',              color: 'text-indigo-500' },
+    { id: 'garden',       label: 'Garden',       icon: 'fa-solid fa-leaf',                color: 'text-green-500' },
     { id: 'quests',       label: 'Quests',       icon: 'fa-solid fa-scroll',              color: 'text-yellow-600' },
+    { id: 'skill-tree',   label: 'Yggdrasil',    icon: 'fa-solid fa-tree',                color: 'text-emerald-600' },
     { id: 'achievements', label: 'Feats',        icon: 'fa-solid fa-trophy',              color: 'text-orange-500' },
     { id: 'settings',     label: 'Settings',     icon: 'fa-solid fa-gear',                color: 'text-slate-400' },
 ];
 
-// Mobile-bottom-bar shows first 5 only; the rest are in the slide-out drawer
-const MOBILE_PRIMARY_TABS = ['battle', 'garden', 'forge', 'roster', 'gacha'];
-
-// ===========================
-// INITIALIZATION
-// ===========================
+const MOBILE_PRIMARY_TABS = ['battle', 'roster', 'gacha', 'dungeons', 'alchemy'];
 
 function initializeGame() {
     initializeLogging();
@@ -52,13 +48,8 @@ function initializeGame() {
     switchView('battle');
     gameState.checkQuestReset();
 
-    // First-time tutorial
     if (typeof checkAndLaunchTutorial === 'function') checkAndLaunchTutorial();
 }
-
-// ===========================
-// NAVIGATION
-// ===========================
 
 function renderNavigation() {
     const desktopNav = document.getElementById('desktop-nav');
@@ -69,7 +60,6 @@ function renderNavigation() {
     mobileNav.innerHTML  = '';
 
     APP_NAVIGATION.forEach((nav, idx) => {
-        // Desktop sidebar item
         const dItem = document.createElement('div');
         dItem.className = 'nav-item';
         dItem.dataset.target = nav.id;
@@ -81,7 +71,6 @@ function renderNavigation() {
         `;
         desktopNav.appendChild(dItem);
 
-        // Bottom mobile bar (primary tabs only)
         if (MOBILE_PRIMARY_TABS.includes(nav.id)) {
             const mItem = document.createElement('div');
             mItem.className = 'mobile-nav-item';
@@ -94,7 +83,6 @@ function renderNavigation() {
 }
 
 function buildMobileDrawer() {
-    // Inject the slide-out drawer DOM once
     if (document.getElementById('mobile-drawer')) return;
 
     const overlay = document.createElement('div');
@@ -106,7 +94,6 @@ function buildMobileDrawer() {
     drawer.id = 'mobile-drawer';
     drawer.className = 'mobile-drawer';
 
-    // Drawer header
     drawer.innerHTML = `
         <div class="p-5 flex items-center justify-between border-b border-slate-100">
             <div class="flex items-center gap-3">
@@ -139,7 +126,6 @@ function buildMobileDrawer() {
     document.body.appendChild(overlay);
     document.body.appendChild(drawer);
 
-    // Populate drawer nav with ALL tabs
     const drawerNav = document.getElementById('drawer-nav');
     APP_NAVIGATION.forEach((nav, idx) => {
         const item = document.createElement('div');
@@ -173,7 +159,6 @@ window.closeMobileDrawer = function() {
 };
 
 function switchView(viewId) {
-    // Sync active state on all nav surfaces
     document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(el => {
         const target = el.dataset.target || el.dataset.drawerTarget;
         el.classList.toggle('active', target === viewId);
@@ -212,28 +197,21 @@ function refreshViewContent(viewId) {
         case 'achievements': if (typeof renderAchievements     === 'function') renderAchievements(gameState);     break;
         case 'settings':     if (typeof renderProfile          === 'function') renderProfile(gameState);          break;
         case 'dungeons':     if (typeof renderDungeons         === 'function') renderDungeons(gameState);         break;
+        case 'alchemy':      if (typeof renderAlchemy          === 'function') renderAlchemy(gameState);          break;
     }
 }
 
-// ===========================
-// EVENT LISTENERS
-// ===========================
-
 function setupEventListeners() {
-    // Mobile hamburger
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     if (mobileMenuBtn) mobileMenuBtn.onclick = openMobileDrawer;
 
-    // Desktop sidebar profile
     const profileBtn = document.getElementById('sidebar-profile-btn');
     if (profileBtn) profileBtn.onclick = () => switchView('settings');
 
-    // Save on hide
     document.addEventListener('visibilitychange', () => {
         if (document.hidden && gameState) saveGame(gameState);
     });
 
-    // Keyboard: Escape closes modals/drawer, 1-9/0 switch tabs
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
@@ -258,16 +236,11 @@ function setupEventListeners() {
     });
 }
 
-// ===========================
-// UTILITIES & LOOPS
-// ===========================
-
 function startUIUpdateLoop(gameState) {
     setInterval(() => {
         if (gameState && typeof updateCurrencyDisplay === 'function') {
             updateCurrencyDisplay(gameState);
         }
-        // Keep drawer username in sync
         const drawerUser = document.getElementById('drawer-username');
         const sidebarUser = document.getElementById('sidebar-username');
         const name = gameState?.playerName || 'Player';
@@ -287,10 +260,6 @@ function closeModal() {
         setTimeout(() => modal.classList.add('hidden'), 300);
     }
 }
-
-// ===========================
-// DEBUG & BOOTSTRAP
-// ===========================
 
 window.debug = {
     help: () => console.table({
