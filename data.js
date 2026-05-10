@@ -225,7 +225,7 @@ const ENEMIES_DATABASE = [
       baseStats: { hp: 140, atk: 22, def: 9,  spd: 108 }, reward: { gold: 17 }, special: ['stunner'] },
     { id: 'e053', name: 'Kodama',          emoji: '🌳', element: 'Wind',  behavior: 'support',
       baseStats: { hp: 190, atk: 15, def: 18, spd: 75 },  reward: { gold: 15 }, special: ['healer'] },
-    { id: 'e054', name: 'Ghost Lantern',   emoji: '🏮', element: 'Dark',  behavior: 'evasive',
+    { id: 'e054', name: 'Ghost Lantern',   emoji: '🌮', element: 'Dark',  behavior: 'evasive',
       baseStats: { hp: 145, atk: 32, def: 6,  spd: 122 }, reward: { gold: 21 } },
     { id: 'e055', name: 'Tiny Oni',        emoji: '👹', element: 'Fire',  behavior: 'berserker',
       baseStats: { hp: 200, atk: 24, def: 16, spd: 85 },  reward: { gold: 18 } },
@@ -417,20 +417,142 @@ const EQUIPMENT_DROP_POOLS = {
 // GARDEN / ITEMS DATABASE
 // ===========================
 
-const GARDEN_ITEMS_DATABASE = {
+const GARDEN_DATABASE = {
     seeds: [
-        { id: 's001', name: 'Sakura Seed', emoji: '🌸', growthTime: 30000, resultId: 't001', desc: 'Fast growing healing herb.' },
-        { id: 's002', name: 'Matcha Seed', emoji: '🍵', growthTime: 90000, resultId: 't002', desc: 'Takes time, yields power.' },
-        { id: 's003', name: 'Dragon Seed', emoji: '🐲', growthTime: 180000, resultId: 't003', desc: 'Rare seed with potent magic.' },
-        { id: 's004', name: 'Moon Seed', emoji: '🌙', growthTime: 60000, resultId: 't004', desc: 'Grows in moonlight.' }
+        // === BASIC HERBS (tea rewards) ===
+        { id: 's001', name: 'Sakura Herb', emoji: '🌸', element: null, rarity: 'N',
+          growthTime: 120000, waterBonus: false, waveReq: 0,
+          reward: { type: 'tea', id: 't001', qty: 1 },
+          desc: 'A gentle healing herb. Fast growing and soothing.' },
+        { id: 's002', name: 'Spirit Grass', emoji: '🌿', element: null, rarity: 'N',
+          growthTime: 240000, waterBonus: false, waveReq: 0,
+          reward: { type: 'tea', id: 't002', qty: 1 },
+          desc: 'Ordinary grass imbued with warrior spirit.' },
+        { id: 's003', name: 'Iron Fern', emoji: '🍃', element: null, rarity: 'N',
+          growthTime: 180000, waterBonus: false, waveReq: 0,
+          reward: { type: 'tea', id: 't003', qty: 1 },
+          desc: "A hardy fern that hardens the drinker's body." },
+        { id: 's004', name: 'Moon Bloom', emoji: '🌙', element: null, rarity: 'N',
+          growthTime: 300000, waterBonus: false, waveReq: 0,
+          reward: { type: 'tea', id: 't004', qty: 1 },
+          desc: 'Glows softly at night. Makes a mysterious brew.' },
+
+        // === ELEMENTAL PLANTS (forge material rewards) ===
+        { id: 's005', name: 'Ember Flower', emoji: '🔥', element: 'fire', rarity: 'R',
+          growthTime: 480000, waterBonus: true, waveReq: 3,
+          reward: { type: 'material', id: 'm006', qty: 1 },
+          desc: 'Smoulders as it grows. Yields fire crystals.' },
+        { id: 's006', name: 'Frost Blossom', emoji: '❄️', element: 'water', rarity: 'R',
+          growthTime: 480000, waterBonus: true, waveReq: 3,
+          reward: { type: 'material', id: 'm007', qty: 1 },
+          desc: 'Cool to the touch. Yields water gems.' },
+        { id: 's007', name: 'Storm Reed', emoji: '🌪️', element: 'wind', rarity: 'R',
+          growthTime: 360000, waterBonus: false, waveReq: 5,
+          reward: { type: 'material', id: 'm008', qty: 1 },
+          desc: 'Rustles without wind. Yields wind feathers.' },
+        { id: 's008', name: 'Radiant Lily', emoji: '🌟', element: 'light', rarity: 'SR',
+          growthTime: 720000, waterBonus: true, waveReq: 8,
+          reward: { type: 'material', id: 'm009', qty: 1 },
+          desc: 'Emits a soft golden glow. Yields light shards.' },
+        { id: 's009', name: 'Shadow Orchid', emoji: '🌑', element: 'dark', rarity: 'SR',
+          growthTime: 720000, waterBonus: false, waveReq: 8,
+          reward: { type: 'material', id: 'm010', qty: 1 },
+          desc: 'Absorbs light. Yields dark essence.' },
+
+        // === BASIC FORGE MATERIAL PLANTS ===
+        { id: 's010', name: 'Iron Sprout', emoji: '⚙️', element: null, rarity: 'N',
+          growthTime: 300000, waterBonus: false, waveReq: 1,
+          reward: { type: 'material', id: 'm001', qty: 2 },
+          desc: 'Draws iron from the soil. A handy ore source.' },
+        { id: 's011', name: 'Bone Flower', emoji: '💀', element: null, rarity: 'N',
+          growthTime: 240000, waterBonus: false, waveReq: 2,
+          reward: { type: 'material', id: 'm011', qty: 2 },
+          desc: 'Pale and eerie. Grows well in battle-torn soil.' },
+        { id: 's012', name: 'Spirit Moss', emoji: '💫', element: null, rarity: 'R',
+          growthTime: 600000, waterBonus: true, waveReq: 4,
+          reward: { type: 'material', id: 'm002', qty: 1 },
+          desc: 'Shimmers faintly. A steady source of spirit dust.' },
+
+        // === RARE MATERIAL PLANTS ===
+        { id: 's013', name: 'Crystal Vine', emoji: '💎', element: null, rarity: 'SR',
+          growthTime: 1200000, waterBonus: true, waveReq: 12,
+          reward: { type: 'material', id: 'm003', qty: 1 },
+          desc: 'Takes patience to grow. Yields precious mithril.' },
+        { id: 's014', name: 'Dragon Root', emoji: '🐲', element: 'fire', rarity: 'SSR',
+          growthTime: 1800000, waterBonus: true, waveReq: 20,
+          reward: { type: 'material', id: 'm005', qty: 1 },
+          desc: 'Ancient and powerful. Yields dragon scales.' },
+
+        // === CURRENCY PLANTS ===
+        { id: 's015', name: 'Golden Blossom', emoji: '🌻', element: null, rarity: 'R',
+          growthTime: 600000, waterBonus: false, waveReq: 5,
+          reward: { type: 'gold', id: null, qty: 300 },
+          desc: 'Worth its weight. Yields a gold bounty on harvest.' },
+        { id: 's016', name: 'Petal Rose', emoji: '🌹', element: null, rarity: 'R',
+          growthTime: 480000, waterBonus: false, waveReq: 3,
+          reward: { type: 'petals', id: null, qty: 10 },
+          desc: 'Scatters sakura petals when harvested.' },
+        { id: 's017', name: 'Orb Succulent', emoji: '🔮', element: null, rarity: 'SSR',
+          growthTime: 2400000, waterBonus: false, waveReq: 15,
+          reward: { type: 'orbs', id: null, qty: 1 },
+          desc: 'Rare and mystical. Slowly grows a spirit orb.' },
+
+        // === MYSTIC ENDGAME PLANTS ===
+        { id: 's018', name: 'Star Cactus', emoji: '⭐', element: 'light', rarity: 'SSR',
+          growthTime: 2700000, waterBonus: true, waveReq: 22,
+          reward: { type: 'material', id: 'm004', qty: 1 },
+          desc: 'Blooms only under starlight. Yields star fragments.' },
+        { id: 's019', name: 'Void Sprout', emoji: '🌀', element: 'dark', rarity: 'UR',
+          growthTime: 3600000, waterBonus: false, waveReq: 35,
+          reward: { type: 'material', id: 'm014', qty: 1 },
+          desc: 'Tears space-time as it grows. Yields void crystals.' },
+        { id: 's020', name: 'Boss Blossom', emoji: '💠', element: null, rarity: 'UR',
+          growthTime: 5400000, waterBonus: true, waveReq: 45,
+          reward: { type: 'material', id: 'm012', qty: 1 },
+          desc: 'Crystallized boss energy. Yields a pure boss core.' },
     ],
     teas: [
-        { id: 't001', name: 'Sakura Tea', emoji: '🌸', desc: 'Heal 30% HP to all allies.', effectType: 'heal', effectValue: 0.3 },
-        { id: 't002', name: 'Matcha Brew', emoji: '🍵', desc: '+25% ATK to all allies (3 turns).', effectType: 'buff_atk', effectValue: 0.25 },
-        { id: 't003', name: 'Dragon Elixir', emoji: '🧪', desc: 'Execute enemies below 35% HP instantly.', effectType: 'execute', effectValue: 0.35 },
-        { id: 't004', name: 'Moon Essence', emoji: '🌙', desc: '+30% DEF and regenerate HP for 3 turns.', effectType: 'buff_def', effectValue: 0.3 }
-    ]
+        { id: 't001', name: 'Sakura Tea',    emoji: '🌸', effectType: 'heal',     effectValue: 0.30, desc: 'Heal 30% HP to all allies at battle start.' },
+        { id: 't002', name: 'Matcha Brew',   emoji: '🍵', effectType: 'buff_atk', effectValue: 0.25, desc: '+25% ATK to all allies for 3 turns.' },
+        { id: 't003', name: 'Dragon Elixir', emoji: '🧪', effectType: 'execute',  effectValue: 0.35, desc: 'Execute enemies below 35% HP instantly.' },
+        { id: 't004', name: 'Moon Essence',  emoji: '🌙', effectType: 'buff_def', effectValue: 0.30, desc: '+30% DEF and regenerate HP for 3 turns.' },
+        { id: 't005', name: 'Ember Brew',    emoji: '🔥', effectType: 'buff_atk', effectValue: 0.20, desc: 'Fire heroes deal +20% more damage this battle.' },
+        { id: 't006', name: 'Frost Essence', emoji: '❄️', effectType: 'buff_def', effectValue: 0.20, desc: '+20% DEF. Water heroes have +15% crit this battle.' },
+        { id: 't007', name: 'Storm Tea',     emoji: '🌪️', effectType: 'buff_spd', effectValue: 20,   desc: 'All heroes gain +20 Speed for the battle.' },
+        { id: 't008', name: 'Radiant Tea',   emoji: '✨', effectType: 'heal',     effectValue: 0.20, desc: 'Heal 20% HP and grant Regen to all allies.' },
+    ],
+    fertilizers: [
+        { id: 'f001', name: 'Bone Meal',            emoji: '🌾', rarity: 'N',   cost: 200,
+          effect: 'speed', speedValue: 0.25,
+          desc: 'Reduces growth time by 25%.' },
+        { id: 'f002', name: 'Spirit Fertilizer',    emoji: '💚', rarity: 'R',   cost: 500,
+          effect: 'yield', yieldValue: 1,
+          desc: 'Grants +1 bonus item on harvest.' },
+        { id: 'f003', name: 'Celestial Fertilizer', emoji: '🌟', rarity: 'SSR', cost: 1500,
+          effect: 'both', speedValue: 0.50, yieldValue: 1,
+          desc: 'Cuts growth time by 50% AND grants +1 bonus item.' },
+    ],
+    upgrades: [
+        { id: 'gu001', name: 'Watering System',   emoji: '💧', cost: 2000,
+          effect: 'auto_water',
+          desc: 'Restores 30 water automatically every 30 minutes.' },
+        { id: 'gu002', name: 'Growth Lamp',       emoji: '💡', cost: 5000,
+          effect: 'growth_speed', value: 0.20,
+          desc: 'Reduces all plant growth times by 20%.' },
+        { id: 'gu003', name: 'Auto Harvester',    emoji: '🤖', cost: 8000,
+          effect: 'auto_harvest',
+          desc: 'Automatically collects all ready plants on visit.' },
+        { id: 'gu004', name: 'Mystic Soil',       emoji: '🌍', cost: 12000,
+          effect: 'elemental_bonus',
+          desc: 'Elemental plants have 50% chance for +1 bonus yield.' },
+        { id: 'gu005', name: 'Spirit Greenhouse', emoji: '🏡', cost: 20000,
+          effect: 'extra_plots',
+          desc: 'Unlocks 2 additional bonus plot slots (max 12 total).' },
+    ],
+    plotUnlockCosts: [0, 0, 500, 1500, 3000, 6000, 10000, 15000, 22000, 30000, 40000, 55000]
 };
+
+const GARDEN_ITEMS_DATABASE = GARDEN_DATABASE; // backward compatibility alias
 
 // ===========================
 // FORGE DATABASE
