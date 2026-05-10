@@ -463,11 +463,51 @@ class Enemy {
 
 class Garden {
     constructor() {
-        this.plots = Array(6).fill(null).map((_, i) => ({
+        this.level = 1;
+        this.xp = 0;
+        this.waterLevel = 100;
+        this.lastWaterRefill = Date.now();
+        this.lastAutoWater = Date.now();
+        this.purchasedUpgrades = [];
+        this.fertilizers = {};
+        this.totalHarvests = 0;
+        this.plots = Array(12).fill(null).map((_, i) => ({
             id: i,
             unlocked: i < 2,
             plant: null
         }));
+    }
+
+    get xpToNextLevel() {
+        return this.level * 50;
+    }
+
+    addXP(amount) {
+        this.xp += amount;
+        while (this.xp >= this.xpToNextLevel && this.level < 10) {
+            this.xp -= this.xpToNextLevel;
+            this.level++;
+        }
+        if (this.level >= 10) this.xp = Math.min(this.xp, this.xpToNextLevel - 1);
+    }
+
+    hasUpgrade(id) {
+        return this.purchasedUpgrades.includes(id);
+    }
+
+    getGrowthMultiplier() {
+        return this.hasUpgrade('gu002') ? 0.80 : 1.0;
+    }
+
+    getUnlockedPlotCount() {
+        return this.plots.filter(p => p.unlocked).length;
+    }
+
+    getNextUnlockCost() {
+        const count = this.getUnlockedPlotCount();
+        const maxPlots = this.hasUpgrade('gu005') ? 12 : 10;
+        if (count >= maxPlots) return null;
+        return GARDEN_DATABASE.plotUnlockCosts[count] || null;
     }
 
     unlockPlot(id) {
@@ -476,21 +516,101 @@ class Garden {
         return false;
     }
 
-    plantSeed(plotId, seedId) {
+    plantSeed(plotId, seedId, highestWave = 0) {
         const plot = this.plots.find(p => p.id === plotId);
-        const seed = GARDEN_ITEMS_DATABASE.seeds.find(s => s.id === seedId);
-        if (plot && plot.unlocked && !plot.plant && seed) {
-            plot.plant = { seedId, plantedAt: Date.now(), growthTime: seed.growthTime, ready: false };
-            return true;
+        if (!plot || !plot.unlocked || plot.plant) return false;
+        const seed = GARDEN_DATABASE.seeds.find(s => s.id === seedId);
+        if (!seed) return false;
+        if (seed.waveReq > highestWave) return false;
+
+        const growthTime = Math.floor(seed.growthTime * this.getGrowthMultiplier());
+        plot.plant = {
+            seedId,
+            plantedAt: Date.now(),
+            growthTime,
+            watered: false,
+            fertilizerId: null,
+            stage: 0,
+            ready: false
+        };
+        return true;
+    }
+
+    waterPlant(plotId) {
+        const plot = this.plots.find(p => p.id === plotId);
+        if (!plot?.plant || plot.plant.ready || plot.plant.watered) return false;
+        if (this.waterLevel < 10) return false;
+        plot.plant.watered = true;
+        this.waterLevel = Math.max(0, this.waterLevel - 10);
+        return true;
+    }
+
+    waterAll() {
+        let watered = 0;
+        this.plots.forEach(p => {
+            if (p.unlocked && p.plant && !p.plant.ready && !p.plant.watered && this.waterLevel >= 10) {
+                p.plant.watered = true;
+                this.waterLevel = Math.max(0, this.waterLevel - 10);
+                watered++;
+            }
+        });
+        return watered;
+    }
+
+    fertilizePlot(plotId, fertilizerId) {
+        const plot = this.plots.find(p => p.id === plotId);
+        if (!plot?.plant || plot.plant.ready || plot.plant.fertilizerId) return false;
+        if (!this.fertilizers[fertilizerId] || this.fertilizers[fertilizerId] <= 0) return false;
+
+        const fertDef = GARDEN_DATABASE.fertilizers.find(f => f.id === fertilizerId);
+        if (!fertDef) return false;
+
+        plot.plant.fertilizerId = fertilizerId;
+        this.fertilizers[fertilizerId]--;
+        if (this.fertilizers[fertilizerId] <= 0) delete this.fertilizers[fertilizerId];
+
+        if (fertDef.effect === 'speed' || fertDef.effect === 'both') {
+            const elapsed = Date.now() - plot.plant.plantedAt;
+            const remaining = plot.plant.growthTime - elapsed;
+            const reducedRemaining = remaining * (1 - fertDef.speedValue);
+            plot.plant.plantedAt = Date.now() - (plot.plant.growthTime - reducedRemaining);
         }
-        return false;
+        return true;
     }
 
     checkGrowth() {
-        let changed = false;
         const now = Date.now();
+
+        // Natural water refill: +5 per hour
+        const hoursSince = (now - this.lastWaterRefill) / 3600000;
+        if (hoursSince >= 1) {
+            const refillAmt = Math.floor(hoursSince) * 5;
+            this.waterLevel = Math.min(100, this.waterLevel + refillAmt);
+            this.lastWaterRefill = now - ((hoursSince % 1) * 3600000);
+        }
+
+        // Auto-water upgrade: +30 every 30 minutes
+        if (this.hasUpgrade('gu001')) {
+            const minsSince = (now - this.lastAutoWater) / 60000;
+            if (minsSince >= 30) {
+                this.waterLevel = Math.min(100, this.waterLevel + 30);
+                this.lastAutoWater = now;
+            }
+        }
+
+        let changed = false;
         this.plots.forEach(p => {
-            if (p.plant && !p.plant.ready && (now - p.plant.plantedAt >= p.plant.growthTime)) {
+            if (!p.unlocked || !p.plant || p.plant.ready) return;
+            const elapsed = now - p.plant.plantedAt;
+            const pct = elapsed / p.plant.growthTime;
+
+            let stage = 0;
+            if (pct >= 0.25) stage = 1;
+            if (pct >= 0.60) stage = 2;
+            if (pct >= 1.0)  stage = 3;
+            p.plant.stage = stage;
+
+            if (pct >= 1.0) {
                 p.plant.ready = true;
                 changed = true;
             }
@@ -500,19 +620,111 @@ class Garden {
 
     harvest(plotId) {
         const plot = this.plots.find(p => p.id === plotId);
-        if (plot && plot.plant && plot.plant.ready) {
-            const seed = GARDEN_ITEMS_DATABASE.seeds.find(s => s.id === plot.plant.seedId);
-            plot.plant = null;
-            return seed ? seed.resultId : null;
+        if (!plot?.plant?.ready) return null;
+
+        const seedDef = GARDEN_DATABASE.seeds.find(s => s.id === plot.plant.seedId);
+        if (!seedDef) { plot.plant = null; return null; }
+
+        const reward = { type: seedDef.reward.type, id: seedDef.reward.id, qty: seedDef.reward.qty };
+
+        // Fertilizer yield bonus
+        if (plot.plant.fertilizerId) {
+            const fertDef = GARDEN_DATABASE.fertilizers.find(f => f.id === plot.plant.fertilizerId);
+            if (fertDef && (fertDef.effect === 'yield' || fertDef.effect === 'both')) {
+                reward.qty += fertDef.yieldValue || 1;
+            }
         }
-        return null;
+
+        // Water bonus
+        if (plot.plant.watered && seedDef.waterBonus) reward.qty += 1;
+
+        // Mystic Soil upgrade bonus for elemental plants
+        if (seedDef.element && this.hasUpgrade('gu004') && Math.random() < 0.5) reward.qty += 1;
+
+        const xpGain = { N: 5, R: 10, SR: 20, SSR: 35, UR: 50 }[seedDef.rarity] || 5;
+        this.addXP(xpGain);
+        this.totalHarvests++;
+        plot.plant = null;
+        return reward;
     }
 
-    toJSON() { return { plots: this.plots }; }
+    autoHarvest() {
+        if (!this.hasUpgrade('gu003')) return [];
+        const harvested = [];
+        this.plots.forEach(p => {
+            if (p.unlocked && p.plant?.ready) {
+                const reward = this.harvest(p.id);
+                if (reward) harvested.push(reward);
+            }
+        });
+        return harvested;
+    }
+
+    purchaseUpgrade(upgradeId, gold) {
+        if (this.hasUpgrade(upgradeId)) return { success: false, reason: 'already_owned' };
+        const def = GARDEN_DATABASE.upgrades.find(u => u.id === upgradeId);
+        if (!def) return { success: false, reason: 'not_found' };
+        if (gold < def.cost) return { success: false, reason: 'no_gold' };
+        this.purchasedUpgrades.push(upgradeId);
+        return { success: true, cost: def.cost };
+    }
+
+    buyFertilizer(fertilizerId, gold) {
+        const def = GARDEN_DATABASE.fertilizers.find(f => f.id === fertilizerId);
+        if (!def) return { success: false, reason: 'not_found' };
+        if (gold < def.cost) return { success: false, reason: 'no_gold' };
+        this.fertilizers[fertilizerId] = (this.fertilizers[fertilizerId] || 0) + 1;
+        return { success: true, cost: def.cost };
+    }
+
+    toJSON() {
+        return {
+            level: this.level,
+            xp: this.xp,
+            waterLevel: this.waterLevel,
+            lastWaterRefill: this.lastWaterRefill,
+            lastAutoWater: this.lastAutoWater,
+            purchasedUpgrades: this.purchasedUpgrades,
+            fertilizers: this.fertilizers,
+            totalHarvests: this.totalHarvests,
+            plots: this.plots
+        };
+    }
 
     static fromJSON(data) {
         const g = new Garden();
-        if (data && data.plots) g.plots = data.plots;
+        if (!data) return g;
+        g.level = data.level || 1;
+        g.xp = data.xp || 0;
+        g.waterLevel = data.waterLevel !== undefined ? data.waterLevel : 100;
+        g.lastWaterRefill = data.lastWaterRefill || Date.now();
+        g.lastAutoWater = data.lastAutoWater || Date.now();
+        g.purchasedUpgrades = data.purchasedUpgrades || [];
+        g.fertilizers = data.fertilizers || {};
+        g.totalHarvests = data.totalHarvests || 0;
+        if (data.plots) {
+            // Migrate old 6-plot saves to 12-plot layout
+            const oldPlots = data.plots;
+            g.plots = Array(12).fill(null).map((_, i) => {
+                const old = oldPlots.find(p => p.id === i);
+                if (old) {
+                    return {
+                        id: i,
+                        unlocked: old.unlocked,
+                        plant: old.plant ? {
+                            seedId: old.plant.seedId,
+                            plantedAt: old.plant.plantedAt,
+                            growthTime: old.plant.growthTime,
+                            watered: old.plant.watered || false,
+                            fertilizerId: old.plant.fertilizerId || null,
+                            stage: old.plant.stage || 0,
+                            ready: old.plant.ready || false
+                        } : null
+                    };
+                }
+                return { id: i, unlocked: false, plant: null };
+            });
+        }
         return g;
     }
 }
