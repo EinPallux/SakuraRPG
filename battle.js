@@ -170,7 +170,13 @@ window.setBattleFocus = function(enemyInstanceId) {
 window.toggleBattleSpeed = function() {
     battleSpeed = battleSpeed >= 3 ? 1 : battleSpeed + 1;
     const btn = document.getElementById('speed-btn');
-    if (btn) btn.textContent = `${battleSpeed}x Speed`;
+    if (btn) {
+        btn.classList.remove('speed-2x', 'speed-3x');
+        if (battleSpeed === 2) btn.classList.add('speed-2x');
+        if (battleSpeed === 3) btn.classList.add('speed-3x');
+        const txt = document.getElementById('speed-btn-text');
+        if (txt) txt.textContent = `${battleSpeed}× SPEED`;
+    }
     if (currentBattleState && !currentBattleState.waveComplete) {
         scheduleTurn(window.gameState);
     }
@@ -958,7 +964,7 @@ function createTeamSlotHTML(index, gameState) {
 }
 
 // ===========================
-// RENDERING — BATTLE ARENA
+// RENDERING — BATTLE ARENA v3
 // ===========================
 
 function renderBattleArena(gameState, battleState) {
@@ -966,111 +972,92 @@ function renderBattleArena(gameState, battleState) {
     if (!container) return;
 
     const isBossWave = battleState && battleState.enemies.some(e => e.isBoss);
-    const waveLabel = isBossWave
-        ? `<span class="text-red-500 animate-pulse">👑 BOSS</span>`
-        : `Wave ${battleState?.waveNumber ?? gameState.currentWave}`;
+    const autoOn = gameState.autoCast;
 
     container.innerHTML = `
-        <div id="battle-arena-root" class="battle-dashboard animate-entry h-[calc(100vh-140px)] min-h-[580px]">
+        <div id="battle-arena-root" class="battle-arena-v3 animate-entry">
 
-            <!-- LEFT: Stats & Log -->
-            <div class="flex flex-col gap-3 h-full overflow-hidden">
-                <!-- Wave stats bar -->
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
-                    <div class="grid grid-cols-3 gap-2 text-center">
-                        <div class="arena-stat-pill ${isBossWave ? 'bg-red-50 border border-red-200' : 'bg-slate-50'}">
-                            <div class="arena-stat-label">Wave</div>
-                            <div class="arena-stat-val ${isBossWave ? 'text-red-500' : 'text-primary'}" id="dash-wave">${waveLabel}</div>
-                        </div>
-                        <div class="arena-stat-pill bg-slate-50">
-                            <div class="arena-stat-label">Kills</div>
-                            <div class="arena-stat-val text-slate-700" id="dash-kills">0</div>
-                        </div>
-                        <div class="arena-stat-pill bg-slate-50">
-                            <div class="arena-stat-label">Turn</div>
-                            <div class="arena-stat-val text-slate-700" id="dash-turn">0</div>
-                        </div>
+            <!-- ═══ BATTLEFIELD ═══ -->
+            <div class="battle-field" id="battle-field-panel">
+
+                <!-- ENEMY ZONE -->
+                <div class="battle-field-zone enemy-field-zone ${isBossWave ? 'boss-wave' : ''}" id="enemy-zone">
+                    <div class="field-zone-label enemy-label">
+                        <i class="fa-solid fa-skull-crossbones"></i> ENEMIES
+                        <span id="enemy-count-label" class="ml-2 opacity-60"></span>
                     </div>
+                    <div id="arena-enemies" class="field-units-container"></div>
                 </div>
 
-                <!-- Combat log -->
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100 flex-1 flex flex-col overflow-hidden">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Combat Log</div>
-                        <button class="text-[10px] text-slate-300 hover:text-slate-500" onclick="document.getElementById('combat-log').innerHTML=''">Clear</button>
+                <!-- VS DIVIDER + INLINE CONTROLS -->
+                <div class="battle-vs-bar">
+                    <div class="battle-vs-line"></div>
+                    <div class="battle-vs-center">
+                        <span class="battle-wave-badge" id="dash-wave">Wave ${gameState.currentWave}</span>
+                        <span class="battle-separator">·</span>
+                        <span class="battle-turn-text">Turn <span id="dash-turn">0</span></span>
+                        <span class="battle-separator">·</span>
+                        <span class="battle-turn-text">⚔️ <span id="dash-kills">${formatNumber(gameState.totalKills)}</span></span>
                     </div>
-                    <div id="combat-log" class="flex-1 overflow-y-auto text-[11px] space-y-0.5 font-mono pr-1"></div>
-                </div>
-            </div>
-
-            <!-- CENTER: Battle Field -->
-            <div class="flex flex-col gap-2 h-full relative">
-
-                <!-- Enemy zone -->
-                <div class="arena-zone arena-enemy-zone flex-1">
-                    <div class="arena-zone-label enemy">
-                        <i class="fa-solid fa-skull-crossbones mr-1"></i>
-                        Enemies
-                        <span class="ml-2 text-red-300 font-normal" id="enemy-count-label"></span>
-                    </div>
-                    <div id="arena-enemies" class="arena-units enemy-side"></div>
-                </div>
-
-                <!-- VS divider -->
-                <div class="arena-vs-bar shrink-0">
-                    <div class="arena-vs-line"></div>
-                    <div class="arena-vs-badge">VS</div>
-
-                    <div id="next-wave-container" class="absolute inset-0 flex items-center justify-center z-50 hidden">
-                        <button class="btn btn-primary animate-bounce shadow-xl px-8 py-3 text-base border-2 border-white"
-                                onclick="startWave(window.gameState)">
-                            <i class="fa-solid fa-forward mr-2"></i> Next Wave
+                    <div class="battle-inline-controls">
+                        <button id="auto-btn" onclick="toggleAutoCast()"
+                            class="ctrl-btn ${autoOn ? 'auto-on' : ''}">
+                            <i class="fa-solid fa-robot text-[10px]"></i>
+                            <span id="auto-btn-text">${autoOn ? 'AUTO ON' : 'AUTO OFF'}</span>
+                        </button>
+                        <button id="speed-btn" onclick="toggleBattleSpeed()"
+                            class="ctrl-btn ${battleSpeed === 2 ? 'speed-2x' : battleSpeed === 3 ? 'speed-3x' : ''}">
+                            <i class="fa-solid fa-gauge-high text-[10px]"></i>
+                            <span id="speed-btn-text">${battleSpeed}× SPEED</span>
+                        </button>
+                        <button onclick="handleRunDefeat(window.gameState)" class="ctrl-btn retreat-btn">
+                            <i class="fa-solid fa-flag text-[10px]"></i> RETREAT
                         </button>
                     </div>
                 </div>
 
-                <!-- Hero zone -->
-                <div class="arena-zone arena-hero-zone flex-1">
-                    <div class="arena-zone-label hero">
-                        <i class="fa-solid fa-shield-halved mr-1"></i>
-                        Your Team
+                <!-- HERO ZONE -->
+                <div class="battle-field-zone hero-field-zone">
+                    <div class="field-zone-label hero-label">
+                        <i class="fa-solid fa-shield-halved"></i> YOUR TEAM
                     </div>
-                    <div id="arena-heroes" class="arena-units hero-side"></div>
+                    <div id="arena-heroes" class="field-units-container"></div>
+                </div>
+
+                <!-- NEXT WAVE OVERLAY -->
+                <div id="next-wave-container" class="next-wave-overlay hidden">
+                    <button class="next-wave-btn" onclick="startWave(window.gameState)">
+                        <i class="fa-solid fa-forward-fast mr-2"></i> Next Wave
+                    </button>
                 </div>
             </div>
 
-            <!-- RIGHT: Controls -->
-            <div class="flex flex-col gap-3 h-full overflow-y-auto battle-dashboard-right">
+            <!-- ═══ RIGHT PANEL ═══ -->
+            <div class="battle-right-panel">
+
+                <!-- Combat Log -->
+                <div class="battle-log-panel">
+                    <div class="battle-panel-header">
+                        <span><i class="fa-solid fa-scroll mr-1"></i> Combat Log</span>
+                        <button onclick="document.getElementById('combat-log').innerHTML=''" class="clear-log-btn">clear</button>
+                    </div>
+                    <div id="combat-log" class="combat-log-content"></div>
+                </div>
 
                 <!-- Ultimates -->
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                        <i class="fa-solid fa-star-of-david mr-1 text-amber-400"></i> Ultimates
+                <div class="battle-panel-card">
+                    <div class="battle-panel-header">
+                        <span><i class="fa-solid fa-star mr-1 text-amber-400"></i> Ultimates</span>
                     </div>
-                    <div id="ultimates-list" class="space-y-2"></div>
+                    <div id="ultimates-list"></div>
                 </div>
 
-                <!-- Battle items -->
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                        <i class="fa-solid fa-flask mr-1 text-green-400"></i> Battle Items
+                <!-- Battle Items -->
+                <div class="battle-panel-card">
+                    <div class="battle-panel-header">
+                        <span><i class="fa-solid fa-flask mr-1 text-green-400"></i> Items</span>
                     </div>
-                    <div id="battle-tea-list" class="grid grid-cols-2 gap-2"></div>
-                </div>
-
-                <!-- Controls -->
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100 mt-auto space-y-2">
-                    <button id="auto-btn" class="btn w-full ${gameState.autoCast ? 'btn-primary' : 'btn-secondary'} text-sm" onclick="toggleAutoCast()">
-                        <i class="fa-solid fa-robot"></i>
-                        <span id="auto-btn-text">${gameState.autoCast ? 'Auto: ON' : 'Auto: OFF'}</span>
-                    </button>
-                    <button id="speed-btn" class="speed-toggle-btn w-full justify-center speed-${battleSpeed}x" onclick="toggleBattleSpeed()">
-                        <i class="fa-solid fa-gauge-high"></i> ${battleSpeed}x Speed
-                    </button>
-                    <button class="btn btn-secondary w-full text-sm text-red-500 border-red-100 hover:bg-red-50"
-                            onclick="handleRunDefeat(window.gameState)">
-                        <i class="fa-solid fa-flag-checkered mr-1"></i> Retreat
-                    </button>
+                    <div id="battle-tea-list" class="p-2 grid grid-cols-2 gap-1.5"></div>
                 </div>
             </div>
         </div>
@@ -1086,19 +1073,15 @@ function renderBattleArena(gameState, battleState) {
 function updateBattleUI(gameState, battleState) {
     if (!battleState) return;
 
+    const isBoss = battleState.enemies.some(e => e.isBoss);
+
     const waveEl  = document.getElementById('dash-wave');
     const killsEl = document.getElementById('dash-kills');
     const turnEl  = document.getElementById('dash-turn');
-    const isBoss  = battleState.enemies.some(e => e.isBoss);
-    if (waveEl) {
-        waveEl.innerHTML = isBoss
-            ? `<span class="text-red-500">👑 BOSS</span>`
-            : String(gameState.currentWave);
-    }
+    if (waveEl)  waveEl.innerHTML  = isBoss ? `<span class="text-red-500 animate-pulse">👑 BOSS</span>` : `Wave ${gameState.currentWave}`;
     if (killsEl) killsEl.textContent = formatNumber(gameState.totalKills);
     if (turnEl)  turnEl.textContent  = battleState.turnCounter;
 
-    // Update enemy count label
     const countLabel = document.getElementById('enemy-count-label');
     if (countLabel) {
         const alive = battleState.aliveEnemies.length;
@@ -1106,18 +1089,23 @@ function updateBattleUI(gameState, battleState) {
         countLabel.textContent = `${alive}/${total}`;
     }
 
+    // Boss wave visual
+    const enemyZone = document.getElementById('enemy-zone');
+    if (enemyZone) {
+        isBoss ? enemyZone.classList.add('boss-wave') : enemyZone.classList.remove('boss-wave');
+    }
+
+    // Combat log
     const logEl = document.getElementById('combat-log');
     if (logEl) {
-        logEl.innerHTML = battleState.combatLog.map(log => {
-            const colorMap = {
-                info: 'text-blue-500 font-bold', success: 'text-green-600',
-                warning: 'text-orange-500', special: 'text-purple-500 font-bold',
-                heal: 'text-green-500', fire: 'text-orange-600',
-                poison: 'text-purple-600', neutral: 'text-slate-500'
-            };
-            const cls = colorMap[log.type] || 'text-slate-500';
-            return `<div class="${cls} leading-relaxed">${log.message}</div>`;
-        }).join('');
+        const colorMap = {
+            info: 'log-info', success: 'log-success', warning: 'log-warning',
+            special: 'log-special', heal: 'log-heal', fire: 'log-fire',
+            poison: 'log-poison', neutral: 'log-neutral'
+        };
+        logEl.innerHTML = battleState.combatLog.map(log =>
+            `<div class="log-entry ${colorMap[log.type] || 'log-neutral'}">${log.message}</div>`
+        ).join('');
         logEl.scrollTop = 0;
     }
 
@@ -1126,28 +1114,28 @@ function updateBattleUI(gameState, battleState) {
     if (heroesContainer)  renderUnits(heroesContainer,  battleState.heroes,  true,  battleState);
     if (enemiesContainer) renderUnits(enemiesContainer, battleState.enemies, false, battleState);
 
-    // Ultimates list
+    // Ultimates
     const ultsEl = document.getElementById('ultimates-list');
     if (ultsEl) {
-        ultsEl.innerHTML = battleState.heroes
-            .filter(h => h.isAlive)
-            .map(hero => {
-                const canCast = hero.canUseUltimate();
-                const pct = hero.getManaPercent();
-                return `
-                    <div class="bg-slate-50 border ${canCast ? 'glow-gold border-amber-300 cursor-pointer hover:bg-amber-50' : 'border-slate-200'} p-2.5 rounded-xl transition-all"
-                         onclick="${canCast ? `manualUltimate('${hero.id}')` : ''}">
-                        <div class="flex justify-between items-center mb-1">
-                            <div class="text-xs font-bold text-slate-700 truncate">${hero.name}</div>
-                            <span class="text-[10px] font-bold ml-1 ${canCast ? 'text-amber-600 animate-pulse' : 'text-slate-400'}">${canCast ? 'READY!' : Math.floor(pct)+'%'}</span>
-                        </div>
-                        <div class="text-[9px] text-slate-400 mb-1.5 truncate">${hero.ultimate.name}</div>
-                        <div class="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
-                            <div class="${canCast ? 'bg-amber-400' : 'bg-blue-400'} h-full transition-all duration-300" style="width:${pct}%"></div>
-                        </div>
+        ultsEl.innerHTML = battleState.heroes.filter(h => h.isAlive).map(hero => {
+            const canCast = hero.canUseUltimate();
+            const pct = hero.getManaPercent();
+            return `
+                <div class="ult-item ${canCast ? 'ult-ready' : ''}"
+                     onclick="${canCast ? `manualUltimate('${hero.id}')` : ''}">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="text-xs font-bold text-slate-700 truncate">${hero.name}</div>
+                        <span class="text-[10px] font-bold ${canCast ? 'text-amber-600' : 'text-slate-400'}">
+                            ${canCast ? '✨ READY' : Math.floor(pct) + '%'}
+                        </span>
                     </div>
-                `;
-            }).join('');
+                    <div class="text-[9px] text-slate-400 mb-1.5 truncate italic">${hero.ultimate.name}</div>
+                    <div class="unit-bar-track">
+                        <div class="unit-bar-fill ${canCast ? 'ult-ready-fill' : 'mp'}" style="width:${pct}%"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     renderTeaList(gameState);
@@ -1159,97 +1147,106 @@ function renderUnits(container, units, isHero, battleState) {
         const id = el.getAttribute('data-unit-id');
         if (id) existing.set(id, el);
     });
-
     const active = new Set();
 
     units.forEach(unit => {
         const unitId = unit.instanceId || unit.id;
         active.add(unitId);
 
-        const hpPct   = unit.getHPPercent();
-        const hpText  = `${Math.floor(unit.currentHP)}/${unit.maxHP}`;
-        const mpPct   = isHero ? unit.getManaPercent() : 0;
-        const shPct   = (isHero && unit.shieldHP > 0) ? Math.min(100, (unit.shieldHP / unit.maxHP) * 100) : 0;
-        const statuses = (unit.statusEffects || []).map(e => STATUS_EFFECTS[e.type]?.emoji || '').join('');
+        const hpPct  = unit.getHPPercent();
+        const hpText = `${Math.floor(unit.currentHP)}/${unit.maxHP}`;
+        const mpPct  = isHero ? unit.getManaPercent() : 0;
+        const shPct  = unit.shieldHP > 0 ? Math.min(100, (unit.shieldHP / unit.maxHP) * 100) : 0;
+        const hpClass = hpPct > 55 ? 'hp-high' : hpPct > 25 ? 'hp-mid' : 'hp-low';
 
         let div = existing.get(unitId);
 
         if (!div) {
             div = document.createElement('div');
-            div.className = `battle-unit ${isHero ? 'is-hero' : 'is-enemy cursor-pointer hover:scale-105 hover:shadow-lg'}`;
             div.setAttribute('data-unit-id', unitId);
             if (!isHero) div.onclick = () => window.setBattleFocus(unitId);
 
-            const imgSrc = isHero ? `images/${unit.id}.jpg` : `images/enemies/${unit.id}.jpg`;
-            const elColor = ELEMENT_COLORS[unit.element] || ELEMENT_COLORS['Fire'];
-
-            const behaviorIcon = { aggressive:'⚔️', defensive:'🛡️', evasive:'💨', berserker:'🔥', technical:'🔮', support:'💚' };
-            const unitSubtitle = isHero
+            const elColor  = ELEMENT_COLORS[unit.element] || ELEMENT_COLORS['Fire'];
+            const bhvIcon  = { aggressive:'⚔️', defensive:'🛡️', evasive:'💨', berserker:'🔥', technical:'🔮', support:'💚' };
+            const subtitle = isHero
                 ? `Lv.${unit.level} · ${unit.class}`
-                : `${unit.behavior ? (behaviorIcon[unit.behavior] || '') + ' ' + unit.behavior : ''}`;
-            const unitEmoji = (!isHero && unit.emoji) ? unit.emoji : '';
+                : `${bhvIcon[unit.behavior] || ''} ${unit.behavior || ''}`.trim();
+            const isBossUnit = unit.isBoss;
 
-            div.innerHTML = `
-                <div class="battle-unit-image-area">
-                    ${unitEmoji
-                        ? `<div class="absolute inset-0 bg-gradient-to-br ${elColor.from} ${elColor.to} flex items-center justify-center text-5xl select-none">${unitEmoji}</div>`
-                        : `<img src="${imgSrc}" class="battle-unit-img"
-                               onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden')">
-                           <div class="hidden absolute inset-0 bg-gradient-to-br ${elColor.from} ${elColor.to} flex items-center justify-center text-white text-3xl font-bold">${unit.name.substring(0,2).toUpperCase()}</div>`
-                    }
-
-                    <div class="absolute top-1.5 left-1.5 element-badge z-10" style="background:${_elBg(unit.element)}; color:${_elText(unit.element)}; padding:2px 5px; border-radius:999px; font-size:9px; font-weight:700;">
-                        ${elColor.emoji} ${unit.element}
-                    </div>
-
-                    ${unit.isBoss ? '<div class="absolute top-1.5 right-1.5 boss-badge z-10">BOSS</div>' : ''}
-
-                    <div class="focus-indicator absolute inset-0 z-20 hidden pointer-events-none" style="border:3px solid #ef4444; border-radius: inherit;">
-                        <div class="absolute top-0 left-0 right-0 flex justify-center">
-                            <div style="background:#ef4444; color:white; font-size:9px; font-weight:800; padding:2px 8px; border-radius:0 0 6px 6px; letter-spacing:.05em;">TARGET</div>
+            if (isHero) {
+                div.className = 'field-unit hero-unit';
+                div.innerHTML = `
+                    <div class="unit-portrait" style="background:linear-gradient(135deg,${_elBg(unit.element)},#f8fafc);">
+                        <img src="images/${unit.id}.jpg" class="unit-portrait-img"
+                             onerror="this.style.display='none'">
+                        <div class="unit-name-overlay">
+                            <div class="unit-name">${unit.name}</div>
+                            <div class="unit-subtitle">${subtitle}</div>
+                        </div>
+                        <div class="unit-el-badge" style="background:${_elBg(unit.element)};color:${_elText(unit.element)};">
+                            ${elColor.emoji} ${unit.element}
                         </div>
                     </div>
-
-                    <div class="battle-unit-overlay">
-                        <div class="battle-unit-name">${unit.name}</div>
-                        <div class="battle-unit-info capitalize">${unitSubtitle}</div>
-                    </div>
-                </div>
-
-                <div class="battle-unit-stats-area">
-                    <div class="status-badges flex flex-wrap gap-0.5 mb-1" id="status-${unitId}"></div>
-
-                    <div class="stat-row">
-                        <div class="stat-item"><span class="stat-val stat-val-atk">${unit.atk}</span><span class="stat-icon">⚔️</span></div>
-                        <div class="stat-item"><span class="stat-val stat-val-def">${unit.def}</span><span class="stat-icon">🛡️</span></div>
-                        <div class="stat-item"><span class="stat-val stat-val-spd">${unit.spd}</span><span class="stat-icon">💨</span></div>
-                    </div>
-
-                    <div class="bar-groups">
-                        <div class="bar-group">
-                            <div class="bar-label-row">
-                                <span class="text-slate-500">HP</span>
-                                <span class="hp-text text-[9px] font-mono text-slate-400">${hpText}</span>
-                            </div>
-                            <div class="bar-track" style="position:relative;">
-                                <div class="bar-fill hp" style="width:${hpPct}%"></div>
-                                ${shPct > 0 ? `<div class="bar-fill shield" style="width:${shPct}%; position:absolute; top:0; left:0; opacity:0.7;"></div>` : ''}
-                            </div>
+                    <div class="unit-stats-area">
+                        <div class="unit-status-row" id="status-${unitId}"></div>
+                        <div class="unit-stats-mini">
+                            <span>⚔️ <span class="stat-val-atk">${unit.atk}</span></span>
+                            <span>🛡️ <span class="stat-val-def">${unit.def}</span></span>
+                            <span>💨 <span class="stat-val-spd">${unit.spd}</span></span>
                         </div>
-                        ${isHero ? `
-                        <div class="bar-group">
-                            <div class="bar-label-row">
-                                <span class="text-blue-400">MP</span>
-                                <span class="mp-text text-[9px] font-mono text-slate-400">${Math.floor(unit.mana)}/${unit.maxMana}</span>
-                            </div>
-                            <div class="bar-track"><div class="bar-fill mana" style="width:${mpPct}%"></div></div>
-                        </div>` : ''}
+                        <div class="unit-bar-label">
+                            <span>HP</span><span class="hp-text">${hpText}</span>
+                        </div>
+                        <div class="unit-bar-track">
+                            <div class="unit-bar-fill ${hpClass}" style="width:${hpPct}%"></div>
+                            ${shPct > 0 ? `<div class="unit-bar-fill shield-overlay" style="width:${shPct}%"></div>` : ''}
+                        </div>
+                        <div class="unit-bar-label">
+                            <span class="text-indigo-400">MP</span>
+                            <span class="mp-text">${Math.floor(unit.mana)}/${unit.maxMana}</span>
+                        </div>
+                        <div class="unit-bar-track">
+                            <div class="unit-bar-fill mp" style="width:${mpPct}%"></div>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else {
+                div.className = `field-unit enemy-unit ${isBossUnit ? 'is-boss' : ''}`;
+                div.innerHTML = `
+                    <div class="unit-portrait" style="background:linear-gradient(150deg,${_elBg(unit.element)} 0%,${_elBg(unit.element)}aa 100%);">
+                        <div class="unit-emoji-display">${unit.emoji || unit.name.substring(0,2)}</div>
+                        <div class="unit-name-overlay">
+                            <div class="unit-name">${unit.name}</div>
+                            <div class="unit-subtitle">${subtitle}</div>
+                        </div>
+                        <div class="unit-el-badge" style="background:${_elBg(unit.element)};color:${_elText(unit.element)};">
+                            ${elColor.emoji} ${unit.element}
+                        </div>
+                        ${isBossUnit ? '<div class="unit-boss-badge">👑 BOSS</div>' : ''}
+                        <div class="unit-focus-ring" id="focus-${unitId}">
+                            <div class="unit-focus-ring-label">TARGET</div>
+                        </div>
+                    </div>
+                    <div class="unit-stats-area">
+                        <div class="unit-status-row" id="status-${unitId}"></div>
+                        <div class="unit-stats-mini">
+                            <span>⚔️ <span class="stat-val-atk">${unit.atk}</span></span>
+                            <span>🛡️ <span class="stat-val-def">${unit.def}</span></span>
+                            <span>💨 <span class="stat-val-spd">${unit.spd}</span></span>
+                        </div>
+                        <div class="unit-bar-label">
+                            <span>HP</span><span class="hp-text">${hpText}</span>
+                        </div>
+                        <div class="unit-bar-track">
+                            <div class="unit-bar-fill ${hpClass}" style="width:${hpPct}%"></div>
+                            ${shPct > 0 ? `<div class="unit-bar-fill shield-overlay" style="width:${shPct}%"></div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
             container.appendChild(div);
         } else {
-            // Update values
+            // In-place updates (no full re-render)
             const atkEl = div.querySelector('.stat-val-atk');
             const defEl = div.querySelector('.stat-val-def');
             const spdEl = div.querySelector('.stat-val-spd');
@@ -1257,42 +1254,48 @@ function renderUnits(container, units, isHero, battleState) {
             if (defEl) defEl.textContent = unit.def;
             if (spdEl) spdEl.textContent = unit.spd;
 
-            const hpBar = div.querySelector('.bar-fill.hp');
-            if (hpBar) {
-                hpBar.style.width = `${hpPct}%`;
-                hpPct < 30 ? hpBar.classList.add('low') : hpBar.classList.remove('low');
-            }
-            const hpTextEl = div.querySelector('.hp-text');
-            if (hpTextEl) hpTextEl.textContent = hpText;
+            const hpBar = div.querySelector(`.unit-bar-fill.${existing.get(unitId)?.dataset?.lastHpClass || 'hp-high'}`);
+            const allHpBars = div.querySelectorAll('.unit-bar-fill');
+            allHpBars.forEach(bar => {
+                if (bar.classList.contains('hp-high') || bar.classList.contains('hp-mid') || bar.classList.contains('hp-low')) {
+                    bar.className = `unit-bar-fill ${hpClass}`;
+                    bar.style.width = `${hpPct}%`;
+                }
+            });
+            div.dataset.lastHpClass = hpClass;
+
+            const hpTxt = div.querySelector('.hp-text');
+            if (hpTxt) hpTxt.textContent = hpText;
 
             if (isHero) {
-                const mpBar = div.querySelector('.bar-fill.mana');
+                const mpBar = div.querySelector('.unit-bar-fill.mp');
                 if (mpBar) mpBar.style.width = `${mpPct}%`;
-                const mpTextEl = div.querySelector('.mp-text');
-                if (mpTextEl) mpTextEl.textContent = `${Math.floor(unit.mana)}/${unit.maxMana}`;
+                const mpTxt = div.querySelector('.mp-text');
+                if (mpTxt) mpTxt.textContent = `${Math.floor(unit.mana)}/${unit.maxMana}`;
             }
         }
 
         // Status badges
         const statusEl = div.querySelector(`#status-${unitId}`);
-        if (statusEl && unit.statusEffects) {
-            statusEl.innerHTML = unit.statusEffects.map(e =>
-                `<span class="status-badge" title="${STATUS_EFFECTS[e.type]?.name} (${e.duration}t)">${STATUS_EFFECTS[e.type]?.emoji || '?'}</span>`
+        if (statusEl) {
+            statusEl.innerHTML = (unit.statusEffects || []).map(e =>
+                `<span class="status-badge ${e.type}" title="${STATUS_EFFECTS[e.type]?.name} (${e.duration}t)">${STATUS_EFFECTS[e.type]?.emoji || '?'}</span>`
             ).join('');
         }
 
-        // Dead state
+        // Dead/alive state
         unit.isAlive ? div.classList.remove('dead') : div.classList.add('dead');
 
-        // Focus indicator
-        const focusEl = div.querySelector('.focus-indicator');
-        if (focusEl) {
-            const isFocused = battleState && battleState.focusedEnemyId === unitId;
-            isFocused ? focusEl.classList.remove('hidden') : focusEl.classList.add('hidden');
+        // Focus indicator (enemy only)
+        if (!isHero) {
+            const focusEl = div.querySelector(`#focus-${unitId}`);
+            if (focusEl) {
+                const focused = battleState && battleState.focusedEnemyId === unitId;
+                focused ? focusEl.classList.add('visible') : focusEl.classList.remove('visible');
+            }
         }
     });
 
-    // Remove stale nodes
     existing.forEach((node, id) => { if (!active.has(id)) node.remove(); });
 }
 
@@ -1323,6 +1326,200 @@ function renderTeaList(gameState) {
             `;
         }).join('');
 }
+
+// ===========================
+// MATERIAL DROP GENERATOR
+// ===========================
+
+function _generateMaterialDrops(enemies, wave, isBossWave) {
+    const drops = [];
+    const elementMatMap = { Fire: 'm006', Water: 'm007', Wind: 'm008', Light: 'm009', Dark: 'm010' };
+
+    enemies.forEach(enemy => {
+        const tier = wave <= 10 ? 1 : wave <= 25 ? 2 : wave <= 40 ? 3 : wave <= 60 ? 4 : 5;
+
+        // Common drop: Iron Ore / Monster Bone
+        if (Math.random() < 0.55) {
+            const id = Math.random() < 0.5 ? 'm001' : 'm011';
+            const qty = Math.floor(Math.random() * (tier + 1)) + 1;
+            drops.push({ id, qty, emoji: id === 'm001' ? '⛏️' : '🦴' });
+        }
+
+        // Elemental material drop (medium chance)
+        if (Math.random() < 0.28 + tier * 0.04) {
+            const matId = elementMatMap[enemy.element] || 'm002';
+            drops.push({ id: matId, qty: 1, emoji: FORGE_DATABASE.materials.find(m => m.id === matId)?.emoji || '✨' });
+        }
+
+        // Spirit Dust at higher waves
+        if (tier >= 2 && Math.random() < 0.20) {
+            drops.push({ id: 'm002', qty: Math.floor(Math.random() * 2) + 1, emoji: '✨' });
+        }
+
+        // Rare material drops at higher tiers
+        if (tier >= 3 && Math.random() < 0.10) {
+            drops.push({ id: 'm003', qty: 1, emoji: '💎' }); // Mithril
+        }
+        if (tier >= 4 && Math.random() < 0.06) {
+            drops.push({ id: 'm013', qty: 1, emoji: '🪨' }); // Enhancement Stone
+        }
+    });
+
+    // Boss-specific extra drops
+    if (isBossWave) {
+        drops.push({ id: 'm012', qty: 1, emoji: '💠' }); // Boss Core guaranteed
+        drops.push({ id: 'm004', qty: Math.floor(Math.random() * 2) + 1, emoji: '🌟' }); // Star Fragments
+        if (wave >= 40 && Math.random() < 0.25) {
+            drops.push({ id: 'm014', qty: 1, emoji: '🔮' }); // Void Crystal
+        }
+    }
+
+    // Consolidate duplicates
+    const consolidated = {};
+    drops.forEach(d => {
+        if (!consolidated[d.id]) consolidated[d.id] = { ...d, qty: 0 };
+        consolidated[d.id].qty += d.qty;
+    });
+    return Object.values(consolidated);
+}
+
+// ===========================
+// TRAVELING SALESMAN EVENT
+// ===========================
+
+function showMerchantEvent(gameState) {
+    // Pick 4 random items from MERCHANT_DATABASE
+    const shuffled = [...MERCHANT_DATABASE].sort(() => Math.random() - 0.5);
+    const picks = shuffled.slice(0, 4);
+
+    const rarityColors = { N: '#10b981', R: '#3b82f6', SR: '#8b5cf6', SSR: '#f59e0b', UR: '#ec4899' };
+    const currencyIcon = { gold: '💰', petals: '🌸', orbs: '🔮' };
+
+    function getBalance(cur) {
+        if (cur === 'gold')   return formatNumber(gameState.gold);
+        if (cur === 'petals') return gameState.petals;
+        if (cur === 'orbs')   return gameState.spiritOrbs;
+        return 0;
+    }
+    function canAfford(item) {
+        const bal = cur => cur === 'gold' ? gameState.gold : cur === 'petals' ? gameState.petals : gameState.spiritOrbs;
+        return bal(item.currency) >= item.price;
+    }
+
+    const itemsHTML = picks.map(item => {
+        const affordable = canAfford(item);
+        const rc = rarityColors[item.rarity] || '#94a3b8';
+        return `
+            <div class="merchant-item-card" style="border-color:${rc}20;">
+                <div class="merchant-item-header" style="background:${rc}12;">
+                    <span class="merchant-item-emoji">${item.emoji}</span>
+                    <div class="merchant-item-info">
+                        <div class="merchant-item-name">${item.name}</div>
+                        <span class="merchant-rarity-badge" style="color:${rc};background:${rc}18;">${item.rarity}</span>
+                    </div>
+                </div>
+                <div class="merchant-item-price">
+                    <span>${currencyIcon[item.currency]} ${formatNumber(item.price)}</span>
+                    <span class="merchant-balance">(You: ${getBalance(item.currency)})</span>
+                </div>
+                <button class="merchant-buy-btn ${affordable ? 'can-afford' : 'cant-afford'}"
+                        onclick="${affordable ? `buyMerchantItem('${item.id}')` : ''}"
+                        ${!affordable ? 'disabled' : ''}>
+                    ${affordable ? '✨ Buy' : '❌ Too costly'}
+                </button>
+            </div>
+        `;
+    }).join('');
+
+    const overlay = document.createElement('div');
+    overlay.id = 'merchant-overlay';
+    overlay.className = 'merchant-overlay';
+    overlay.innerHTML = `
+        <div class="merchant-backdrop" onclick="closeMerchantEvent()"></div>
+        <div class="merchant-modal">
+            <div class="merchant-header">
+                <div class="merchant-avatar">🧳</div>
+                <div class="merchant-title-block">
+                    <div class="merchant-title">A Traveling Salesman Appears!</div>
+                    <div class="merchant-subtitle">「Ara ara~ What luck! I have some fine goods for you, adventurer…」</div>
+                </div>
+                <button class="merchant-close-btn" onclick="closeMerchantEvent()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="merchant-rarity-banner">
+                <span>⭐ RARE ENCOUNTER</span>
+            </div>
+            <div class="merchant-items-grid" id="merchant-items-grid">
+                ${itemsHTML}
+            </div>
+            <div class="merchant-footer">
+                <button class="merchant-leave-btn" onclick="closeMerchantEvent()">
+                    <i class="fa-solid fa-walking mr-2"></i> Continue Adventure
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Store picks for buy logic
+    overlay._picks = picks;
+
+    requestAnimationFrame(() => overlay.classList.add('active'));
+}
+
+window.buyMerchantItem = function(itemId) {
+    const overlay = document.getElementById('merchant-overlay');
+    if (!overlay) return;
+    const picks = overlay._picks || [];
+    const item = picks.find(p => p.id === itemId);
+    if (!item) return;
+    const gs = window.gameState;
+
+    // Deduct currency
+    const afford = (cur, price) => {
+        if (cur === 'gold')   { if (gs.gold < price)       return false; gs.gold -= price;       return true; }
+        if (cur === 'petals') { if (gs.petals < price)     return false; gs.petals -= price;     return true; }
+        if (cur === 'orbs')   { if (gs.spiritOrbs < price) return false; gs.spiritOrbs -= price; return true; }
+        return false;
+    };
+    if (!afford(item.currency, item.price)) { showToast('Not enough currency!', 'error'); return; }
+
+    // Grant item
+    const qty = item.qty || 1;
+    switch (item.type) {
+        case 'equipment': gs.addEquipmentItem(item.equipId); break;
+        case 'material':  gs.addItem('materials', item.matId, qty); break;
+        case 'tea':       gs.addItem('teas', item.teaId, qty); break;
+        case 'orbs':      gs.spiritOrbs += qty; break;
+        case 'petals':    gs.petals += qty; break;
+    }
+
+    showToast(`Purchased ${item.name}!`, 'success');
+    saveGame(gs);
+    updateUI(gs);
+
+    // Refresh merchant UI (mark bought item as sold out)
+    const btn = document.querySelector(`[onclick*="${itemId}"]`);
+    if (btn) {
+        btn.textContent = '✅ Purchased!';
+        btn.disabled = true;
+        btn.classList.remove('can-afford');
+        btn.classList.add('purchased');
+    }
+};
+
+window.closeMerchantEvent = function() {
+    const overlay = document.getElementById('merchant-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    setTimeout(() => {
+        overlay.remove();
+        // Show next wave button
+        const btn = document.getElementById('next-wave-container');
+        if (btn) btn.classList.remove('hidden');
+    }, 400);
+};
 
 // ===========================
 // WAVE RESOLUTION
@@ -1369,24 +1566,24 @@ function handleWaveVictory(gameState, battleState) {
         loot += ` +1 ${seed.emoji}`;
     }
 
-    // Material drops from bosses
-    if (isBossWave) {
-        const matKeys = Object.keys(FORGE_DATABASE.materials.reduce((acc, m) => { acc[m.id] = 1; return acc; }, {}));
-        const mat = matKeys[Math.floor(Math.random() * Math.min(matKeys.length, 3))];
-        const qty = Math.floor(Math.random() * 3) + 1;
-        gameState.addItem('materials', mat, qty);
-        loot += ` +${qty} ⛏️`;
+    // ── Material drops (all waves) ──────────────────────────────
+    const matDrops = _generateMaterialDrops(battleState.enemies, gameState.currentWave - 1, isBossWave);
+    matDrops.forEach(({ id, qty, emoji }) => {
+        gameState.addItem('materials', id, qty);
+        loot += ` +${qty}${emoji}`;
+    });
 
-        // Equipment drop from bosses
-        const tier = Math.floor(gameState.currentWave / 10);
+    // ── Equipment drops from bosses ──────────────────────────────
+    if (isBossWave) {
+        const tier = Math.floor((gameState.currentWave - 1) / 10);
         const poolKey = tier >= 5 ? 'boss50plus' : `boss${Math.min(4, tier) * 10}`;
         const pool = EQUIPMENT_DROP_POOLS[poolKey] || EQUIPMENT_DROP_POOLS['boss10'];
-        if (pool && Math.random() < 0.5) {
+        if (pool && Math.random() < 0.55) {
             const equipId = pool[Math.floor(Math.random() * pool.length)];
             gameState.addEquipmentItem(equipId);
             const eq = gameState.getEquipmentItem(equipId);
             loot += ` +${eq ? eq.name : equipId} 🗡️`;
-            showToast(`Equipment Drop: ${eq ? eq.name : equipId}!`, 'special');
+            showToast(`⚔️ Equipment Drop: ${eq ? eq.name : equipId}!`, 'special');
         }
     }
 
@@ -1404,6 +1601,13 @@ function handleWaveVictory(gameState, battleState) {
     showToast(`Wave Cleared! ${loot}`, 'success');
     saveGame(gameState);
     updateUI(gameState);
+
+    // ── Traveling Salesman event ─────────────────────────────────
+    const merchantChance = isBossWave ? 0.15 : 0.06;
+    if (Math.random() < merchantChance) {
+        setTimeout(() => showMerchantEvent(gameState), 800);
+        return; // Merchant shows instead of Next Wave button
+    }
 
     const btn = document.getElementById('next-wave-container');
     if (btn) btn.classList.remove('hidden');
@@ -1433,15 +1637,12 @@ function handleRunDefeat(gameState, _ignored) {
 function toggleAutoCast() {
     if (!window.gameState) return;
     window.gameState.autoCast = !window.gameState.autoCast;
-    const btn  = document.getElementById('auto-btn');
-    const txt  = document.getElementById('auto-btn-text');
-    if (btn && txt) {
-        if (window.gameState.autoCast) {
-            btn.classList.replace('btn-secondary', 'btn-primary');
-            txt.textContent = 'Auto: ON';
-        } else {
-            btn.classList.replace('btn-primary', 'btn-secondary');
-            txt.textContent = 'Auto: OFF';
-        }
+    const btn = document.getElementById('auto-btn');
+    const txt = document.getElementById('auto-btn-text');
+    if (btn) {
+        window.gameState.autoCast
+            ? btn.classList.add('auto-on')
+            : btn.classList.remove('auto-on');
     }
+    if (txt) txt.textContent = window.gameState.autoCast ? 'AUTO ON' : 'AUTO OFF';
 }
