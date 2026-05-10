@@ -9,6 +9,7 @@ const APP_NAVIGATION = [
     { id: 'battle',       label: 'Battle',      icon: 'fa-solid fa-khanda',              color: 'text-red-500' },
     { id: 'garden',       label: 'Garden',       icon: 'fa-solid fa-leaf',                color: 'text-green-500' },
     { id: 'forge',        label: 'Forge',        icon: 'fa-solid fa-hammer',              color: 'text-indigo-500' },
+    { id: 'dungeons',     label: 'Dungeons',     icon: 'fa-solid fa-dungeon',             color: 'text-violet-500' },
     { id: 'roster',       label: 'Heroes',       icon: 'fa-solid fa-users',               color: 'text-blue-500' },
     { id: 'gacha',        label: 'Summon',       icon: 'fa-solid fa-gem',                 color: 'text-pink-500' },
     { id: 'skill-tree',   label: 'Yggdrasil',    icon: 'fa-solid fa-tree',                color: 'text-emerald-600' },
@@ -210,6 +211,7 @@ function refreshViewContent(viewId) {
         case 'quests':       if (typeof renderQuests           === 'function') renderQuests(gameState);           break;
         case 'achievements': if (typeof renderAchievements     === 'function') renderAchievements(gameState);     break;
         case 'settings':     if (typeof renderProfile          === 'function') renderProfile(gameState);          break;
+        case 'dungeons':     if (typeof renderDungeons         === 'function') renderDungeons(gameState);         break;
     }
 }
 
