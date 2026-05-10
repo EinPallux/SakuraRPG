@@ -2534,3 +2534,236 @@ html {
     0%, 100% { opacity: 0.3; transform: scale(0.85); }
     50%       { opacity: 1;   transform: scale(1.15); }
 }
+
+/* =========================================
+   ALCHEMY LAB
+   ========================================= */
+
+.al-slots-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.al-slot {
+    flex: 1;
+    min-width: 160px;
+    max-width: 240px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+}
+
+.al-slot-empty {
+    border-style: dashed;
+    background: #f8fafc;
+}
+
+.al-slot-active {
+    border-color: #a78bfa;
+    background: linear-gradient(135deg, #faf5ff 0%, #f0fdf4 100%);
+}
+
+.al-slot-done {
+    border-color: #34d399;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.25);
+}
+
+.al-slot-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #334155;
+}
+
+.al-slot-timer {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #7c3aed;
+    margin-top: 0.25rem;
+}
+
+.al-slot-ready {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #059669;
+}
+
+.al-slot-yield {
+    font-size: 0.75rem;
+    color: #475569;
+}
+
+.al-slot-bar-track {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 0.35rem;
+}
+
+.al-slot-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    border-radius: 999px;
+    transition: width 1s linear;
+}
+
+.al-collect-btn {
+    margin-top: 0.5rem;
+    padding: 0.4rem 1rem;
+    background: linear-gradient(135deg, #059669, #34d399);
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.al-collect-btn:hover { opacity: 0.85; }
+
+.al-recipes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 0.85rem;
+}
+
+.al-recipe-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1rem;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.al-recipe-card.al-ready {
+    border-color: #a78bfa;
+    box-shadow: 0 2px 12px rgba(167, 139, 250, 0.2);
+}
+
+.al-recipe-card.al-locked {
+    opacity: 0.6;
+    background: #f8fafc;
+}
+
+.al-recipe-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.al-recipe-emoji {
+    font-size: 2rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.al-recipe-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.al-recipe-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.al-recipe-desc {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-top: 0.15rem;
+}
+
+.al-recipe-time {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #7c3aed;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.al-recipe-mats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+}
+
+.al-mat-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    border: 1.5px solid;
+}
+
+.al-mat-tag.have {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.al-mat-tag.need {
+    background: #fff1f2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+.al-mat-owned {
+    opacity: 0.6;
+    font-size: 0.65rem;
+}
+.al-mat-owned::before { content: '('; }
+.al-mat-owned::after  { content: ')'; }
+
+.al-arrow {
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+
+.al-mat-out {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #4f46e5;
+    background: #eef2ff;
+    border: 1.5px solid #a5b4fc;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+}
+
+.al-start-btn {
+    margin-top: 0.75rem;
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.al-can-start {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    color: white;
+}
+.al-can-start:hover { opacity: 0.85; }
+
+.al-cant-start {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
