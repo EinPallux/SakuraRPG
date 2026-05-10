@@ -209,7 +209,7 @@ const ENEMIES_DATABASE = [
       baseStats: { hp: 180, atk: 26, def: 12, spd: 96 },  reward: { gold: 18 } },
     { id: 'e003', name: 'Wind Wisp',       emoji: '💨', element: 'Wind',  behavior: 'evasive',
       baseStats: { hp: 145, atk: 24, def: 8,  spd: 112 }, reward: { gold: 16 } },
-    { id: 'e004', name: 'Shadow Bat',      emoji: '🦇', element: 'Dark',  behavior: 'aggressive',
+    { id: 'e004', name: 'Shadow Bat',      emoji: '🦷', element: 'Dark',  behavior: 'aggressive',
       baseStats: { hp: 165, atk: 30, def: 10, spd: 118 }, reward: { gold: 20 } },
     { id: 'e005', name: 'Forest Sprite',   emoji: '🌿', element: 'Wind',  behavior: 'support',
       baseStats: { hp: 155, atk: 22, def: 14, spd: 100 }, reward: { gold: 17 }, special: ['healer'] },
@@ -260,7 +260,7 @@ const ENEMIES_DATABASE = [
     { id: 'e061', name: 'Kappa Elder',     emoji: '🐢', element: 'Water', behavior: 'support',
       baseStats: { hp: 550, atk: 48, def: 50, spd: 82 },  reward: { gold: 50 }, special: ['healer'] },
     { id: 'e062', name: 'Metal Slime',     emoji: '⚪', element: 'Light', behavior: 'evasive',
-      baseStats: { hp: 180, atk: 30, def: 80, spd: 155 }, reward: { gold: 120 } }, // rare, high def, flees fast
+      baseStats: { hp: 180, atk: 30, def: 80, spd: 155 }, reward: { gold: 120 } },
     { id: 'e063', name: 'Ronin',           emoji: '⚔️', element: 'Wind',  behavior: 'berserker',
       baseStats: { hp: 430, atk: 75, def: 25, spd: 120 }, reward: { gold: 58 } },
 
