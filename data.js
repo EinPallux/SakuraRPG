@@ -372,7 +372,7 @@ const EQUIPMENT_DATABASE = {
         { id: 'w002', name: 'Flame Blade', rarity: 'R', slot: 'weapon', desc: 'A blade wreathed in fire.',
           stats: { atk: 35, crit: 5 }, emoji: '🔥' },
         { id: 'w003', name: 'Mithril Spear', rarity: 'SR', slot: 'weapon', desc: 'Incredibly sharp mithril lance.',
-          stats: { atk: 65, spd: 8 }, emoji: '🏹' },
+          stats: { atk: 65, spd: 8 }, emoji: '🌹' },
         { id: 'w004', name: 'Dragon Fang', rarity: 'SSR', slot: 'weapon', desc: 'Made from a true dragon tooth.',
           stats: { atk: 110, crit: 10 }, emoji: '🐉' },
         { id: 'w005', name: 'Void Blade', rarity: 'UR', slot: 'weapon', desc: 'A blade from the void itself.',
@@ -438,27 +438,86 @@ const GARDEN_ITEMS_DATABASE = {
 
 const FORGE_DATABASE = {
     materials: [
-        { id: 'm001', name: 'Iron Ore', rarity: 'N', desc: 'Common crafting metal.', emoji: '⛏️' },
-        { id: 'm002', name: 'Spirit Dust', rarity: 'R', desc: 'Glowing magical powder.', emoji: '✨' },
-        { id: 'm003', name: 'Mithril', rarity: 'SR', desc: 'Incredibly light and strong.', emoji: '💎' },
-        { id: 'm004', name: 'Star Fragment', rarity: 'SSR', desc: 'Fallen from the cosmos.', emoji: '🌟' },
-        { id: 'm005', name: 'Dragon Scale', rarity: 'SR', desc: 'Scale from a dragon hide.', emoji: '🐉' }
+        // ── Common ──
+        { id: 'm001', name: 'Iron Ore',         rarity: 'N',   desc: 'Common crafting metal.',         emoji: '⛏️', tier: 1 },
+        { id: 'm011', name: 'Monster Bone',      rarity: 'N',   desc: 'A sturdy bone from a monster.',  emoji: '🦴', tier: 1 },
+        // ── Rare ──
+        { id: 'm002', name: 'Spirit Dust',       rarity: 'R',   desc: 'Glowing magical powder.',        emoji: '✨', tier: 2 },
+        { id: 'm006', name: 'Fire Crystal',      rarity: 'R',   desc: 'Crystallized fire energy.',      emoji: '🔥', tier: 2, element: 'Fire' },
+        { id: 'm007', name: 'Water Gem',         rarity: 'R',   desc: 'A gem filled with water mana.',  emoji: '💧', tier: 2, element: 'Water' },
+        { id: 'm008', name: 'Wind Feather',      rarity: 'R',   desc: 'A feather charged with wind.',   emoji: '🪶', tier: 2, element: 'Wind' },
+        { id: 'm009', name: 'Light Shard',       rarity: 'R',   desc: 'A fragment of pure light.',      emoji: '⭐', tier: 2, element: 'Light' },
+        { id: 'm010', name: 'Dark Essence',      rarity: 'R',   desc: 'Condensed primordial darkness.', emoji: '🌑', tier: 2, element: 'Dark' },
+        // ── Super Rare ──
+        { id: 'm003', name: 'Mithril',           rarity: 'SR',  desc: 'Incredibly light and strong.',   emoji: '📎', tier: 3 },
+        { id: 'm005', name: 'Dragon Scale',      rarity: 'SR',  desc: 'Scale from a dragon hide.',      emoji: '🐉', tier: 3 },
+        { id: 'm013', name: 'Enhancement Stone', rarity: 'SR',  desc: 'Used to enhance equipment.',     emoji: '🪨', tier: 3 },
+        // ── SSR ──
+        { id: 'm004', name: 'Star Fragment',     rarity: 'SSR', desc: 'Fallen from the cosmos.',        emoji: '🌟', tier: 4 },
+        { id: 'm012', name: 'Boss Core',         rarity: 'SSR', desc: 'Crystallized core of a slain boss.', emoji: '💠', tier: 4 },
+        // ── UR ──
+        { id: 'm014', name: 'Void Crystal',      rarity: 'UR',  desc: 'A crystal from the void realm.', emoji: '🔮', tier: 5 },
     ],
     recipes: [
-        { id: 'r001', resultId: 'w002', resultSlot: 'weapons', name: 'Flame Blade', cost: 800,
-          materials: { 'm001': 8, 'm002': 3 }, desc: 'A blade wreathed in fire.' },
-        { id: 'r002', resultId: 'a002', resultSlot: 'armors', name: 'Chain Mail', cost: 600,
-          materials: { 'm001': 12 }, desc: 'Interlocked metal protection.' },
-        { id: 'r003', resultId: 'c002', resultSlot: 'accessories', name: 'Spirit Ring', cost: 1000,
-          materials: { 'm002': 5 }, desc: 'Enhances spiritual power.' },
-        { id: 'r004', resultId: 'w003', resultSlot: 'weapons', name: 'Mithril Spear', cost: 3000,
-          materials: { 'm001': 30, 'm003': 5 }, desc: 'Incredibly sharp mithril lance.' },
-        { id: 'r005', resultId: 'a003', resultSlot: 'armors', name: 'Dragon Scale Armor', cost: 5000,
-          materials: { 'm001': 50, 'm005': 5 }, desc: 'Scales of an ancient dragon.' },
-        { id: 'r006', resultId: 'c003', resultSlot: 'accessories', name: 'Sakura Pendant', cost: 4000,
-          materials: { 'm002': 20, 'm003': 3 }, desc: 'A mystical sakura pendant.' }
+        // ── N / R tier equipment ──
+        { id: 'r001', resultId: 'w002', name: 'Flame Blade',          cost: 800,
+          materials: { 'm001': 8, 'm002': 3, 'm006': 2 } },
+        { id: 'r002', resultId: 'a002', name: 'Chain Mail',            cost: 600,
+          materials: { 'm001': 12, 'm011': 5 } },
+        { id: 'r003', resultId: 'c002', name: 'Spirit Ring',           cost: 1000,
+          materials: { 'm002': 5, 'm011': 3 } },
+        // ── SR tier equipment ──
+        { id: 'r004', resultId: 'w003', name: 'Mithril Spear',         cost: 3000,
+          materials: { 'm001': 30, 'm003': 5, 'm008': 5 } },
+        { id: 'r005', resultId: 'a003', name: 'Dragon Scale Armor',    cost: 5000,
+          materials: { 'm001': 50, 'm005': 5, 'm013': 3 } },
+        { id: 'r006', resultId: 'c003', name: 'Sakura Pendant',        cost: 4000,
+          materials: { 'm002': 20, 'm003': 3, 'm009': 5 } },
+        // ── SSR tier equipment ──
+        { id: 'r007', resultId: 'w004', name: 'Dragon Fang',           cost: 10000,
+          materials: { 'm003': 10, 'm005': 5, 'm004': 3, 'm006': 10 } },
+        { id: 'r008', resultId: 'a004', name: 'Sacred Plate',          cost: 12000,
+          materials: { 'm001': 100, 'm003': 8, 'm009': 8, 'm013': 5 } },
+        { id: 'r009', resultId: 'c004', name: 'Dragon Eye',            cost: 15000,
+          materials: { 'm004': 5, 'm005': 5, 'm012': 2 } },
+        // ── UR tier equipment ──
+        { id: 'r010', resultId: 'w005', name: 'Void Blade',            cost: 30000,
+          materials: { 'm004': 12, 'm012': 3, 'm014': 3 } },
+        { id: 'r011', resultId: 'a005', name: 'Celestial Robe',        cost: 28000,
+          materials: { 'm003': 20, 'm013': 10, 'm012': 3, 'm014': 2 } },
+        { id: 'r012', resultId: 'c005', name: 'Divine Orb',            cost: 25000,
+          materials: { 'm004': 15, 'm007': 15, 'm010': 15, 'm014': 3 } },
     ]
 };
+
+// ===========================
+// MERCHANT DATABASE
+// ===========================
+
+const MERCHANT_DATABASE = [
+    // Equipment
+    { id: 'mg_w002', type: 'equipment', equipId: 'w002', name: 'Flame Blade',         emoji: '🔥', rarity: 'R',   currency: 'gold',   price: 2500 },
+    { id: 'mg_w003', type: 'equipment', equipId: 'w003', name: 'Mithril Spear',       emoji: '🌹', rarity: 'SR',  currency: 'gold',   price: 7000 },
+    { id: 'mg_a002', type: 'equipment', equipId: 'a002', name: 'Chain Mail',           emoji: '🛡️', rarity: 'R',   currency: 'gold',   price: 2000 },
+    { id: 'mg_a003', type: 'equipment', equipId: 'a003', name: 'Dragon Scale Armor',  emoji: '🐲', rarity: 'SR',  currency: 'gold',   price: 6500 },
+    { id: 'mg_c003', type: 'equipment', equipId: 'c003', name: 'Sakura Pendant',      emoji: '🌸', rarity: 'SR',  currency: 'petals', price: 75 },
+    { id: 'mg_c004', type: 'equipment', equipId: 'c004', name: 'Dragon Eye',          emoji: '👁️', rarity: 'SSR', currency: 'petals', price: 200 },
+    // Materials
+    { id: 'mg_m003', type: 'material',  matId: 'm003',  name: 'Mithril ×3',           emoji: '📎', rarity: 'SR',  currency: 'gold',   price: 1800,  qty: 3 },
+    { id: 'mg_m004', type: 'material',  matId: 'm004',  name: 'Star Fragment ×2',     emoji: '🌟', rarity: 'SSR', currency: 'petals', price: 50,    qty: 2 },
+    { id: 'mg_m012', type: 'material',  matId: 'm012',  name: 'Boss Core',            emoji: '💠', rarity: 'SSR', currency: 'gold',   price: 5000,  qty: 1 },
+    { id: 'mg_m013', type: 'material',  matId: 'm013',  name: 'Enhancement Stones ×5',emoji: '🪨', rarity: 'SR',  currency: 'gold',   price: 3500,  qty: 5 },
+    { id: 'mg_m014', type: 'material',  matId: 'm014',  name: 'Void Crystal',         emoji: '🔮', rarity: 'UR',  currency: 'orbs',   price: 25,    qty: 1 },
+    // Teas / Consumables
+    { id: 'mg_t001', type: 'tea',       teaId: 't001',  name: 'Sakura Tea ×3',        emoji: '🌸', rarity: 'N',   currency: 'gold',   price: 600,   qty: 3 },
+    { id: 'mg_t002', type: 'tea',       teaId: 't002',  name: 'Matcha Brew ×2',       emoji: '🍵', rarity: 'R',   currency: 'gold',   price: 1200,  qty: 2 },
+    { id: 'mg_t003', type: 'tea',       teaId: 't003',  name: 'Dragon Elixir',        emoji: '🧪', rarity: 'SR',  currency: 'gold',   price: 3000,  qty: 1 },
+    { id: 'mg_t004', type: 'tea',       teaId: 't004',  name: 'Moon Essence ×2',      emoji: '🌙', rarity: 'R',   currency: 'gold',   price: 1400,  qty: 2 },
+    // Currency exchanges
+    { id: 'mg_orbs3', type: 'orbs',                     name: 'Spirit Orbs ×3',       emoji: '🔮', rarity: 'R',   currency: 'gold',   price: 2000,  qty: 3 },
+    { id: 'mg_petal', type: 'petals',                    name: 'Sakura Petals ×15',    emoji: '🌸', rarity: 'N',   currency: 'gold',   price: 1000,  qty: 15 },
+    { id: 'mg_petal2',type: 'petals',                    name: 'Sakura Petals ×40',    emoji: '🌸', rarity: 'R',   currency: 'gold',   price: 2500,  qty: 40 },
+];
 
 // ===========================
 // ACHIEVEMENT DATABASE
