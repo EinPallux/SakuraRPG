@@ -119,7 +119,6 @@ window.enterDungeon = function(dungeonId) {
         return;
     }
 
-    // Clone heroes preserving prototype methods but with live HP state
     const heroClones = team.map(h => {
         const clone = Object.assign(Object.create(Object.getPrototypeOf(h)), h);
         clone.statusEffects = [...(h.statusEffects || [])];
@@ -134,7 +133,7 @@ window.enterDungeon = function(dungeonId) {
         dungeon,
         heroes: heroClones,
         currentFloor: 0,
-        phase: 'pre',         // pre | fighting | between | complete | defeat
+        phase: 'pre',
         floorResults: [],
         rewards: null
     };
@@ -271,7 +270,6 @@ function _renderDungeonRun(gameState) {
 
     area.innerHTML = `
         <div class="space-y-4">
-            <!-- Header -->
             <div class="flex items-center gap-3">
                 <button class="text-slate-400 hover:text-slate-600 transition-colors p-1"
                         onclick="exitDungeon()">
@@ -286,19 +284,16 @@ function _renderDungeonRun(gameState) {
                 </div>
             </div>
 
-            <!-- Floor progress -->
             <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Floor Progress</div>
                 <div class="flex items-center justify-center gap-0">${floorDots}</div>
             </div>
 
-            <!-- Hero status -->
             <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Your Party</div>
                 <div class="grid grid-cols-1 gap-2">${heroCards}</div>
             </div>
 
-            <!-- Action area -->
             ${actionBox}
         </div>
     `;
@@ -314,7 +309,6 @@ window.fightDungeonFloor = function() {
     _currentDungeonRun.phase = 'fighting';
     _renderDungeonRun(window.gameState);
 
-    // Brief animation delay then simulate
     setTimeout(() => {
         const run   = _currentDungeonRun;
         if (!run) return;
@@ -325,7 +319,6 @@ window.fightDungeonFloor = function() {
         run.floorResults.push(result);
 
         if (result.victory) {
-            // Carry hero HP to next floor
             run.heroes = result.survivingHeroes;
             run.currentFloor++;
 
@@ -350,7 +343,6 @@ window.fightDungeonFloor = function() {
 // ===========================
 
 function _simulateDungeonFloor(heroes, floorConfig) {
-    // Spawn enemies from floor config
     const enemies = floorConfig.enemies.map((eid, i) => {
         const template = ENEMIES_DATABASE.find(e => e.id === eid);
         if (!template) return null;
@@ -359,7 +351,6 @@ function _simulateDungeonFloor(heroes, floorConfig) {
         return enemy;
     }).filter(Boolean);
 
-    // Deep-copy hero states (protect originals until floor resolves)
     const heroCopies = heroes.map(h => {
         const c = Object.assign(Object.create(Object.getPrototypeOf(h)), h);
         c.statusEffects = [...(h.statusEffects || [])];
@@ -381,10 +372,9 @@ function _simulateDungeonFloor(heroes, floorConfig) {
         const aliveHeroes  = heroCopies.filter(h => h.isAlive);
         const aliveEnemies = enemies.filter(e => e.isAlive);
 
-        if (aliveHeroes.length === 0) break;  // defeat
-        if (aliveEnemies.length === 0) break;  // victory
+        if (aliveHeroes.length === 0) break;
+        if (aliveEnemies.length === 0) break;
 
-        // Turn order by speed
         const turnOrder = [
             ...aliveHeroes.map(u => ({ unit: u, isHero: true })),
             ...aliveEnemies.map(u => ({ unit: u, isHero: false }))
@@ -406,24 +396,18 @@ function _simulateDungeonFloor(heroes, floorConfig) {
     }
 
     const survivingHeroes = heroCopies.filter(h => h.isAlive);
-    return {
-        victory: survivingHeroes.length > 0,
-        survivingHeroes,
-        turns: turnCount
-    };
+    return { victory: survivingHeroes.length > 0, survivingHeroes, turns: turnCount };
 }
 
 function _simulateHeroTurn(hero, aliveEnemies, aliveHeroes) {
     hero.mana = (hero.mana || 0) + 12;
 
-    // Ultimate if ready
     if (hero.canUseUltimate && hero.canUseUltimate()) {
         hero.mana = 0;
         _headlessUltimate(hero, aliveEnemies, aliveHeroes);
         return;
     }
 
-    // Class logic
     if (hero.class === 'Healer') {
         const hurt = aliveHeroes.filter(h => h.getHPPercent() < 50)
                                 .sort((a, b) => a.currentHP - b.currentHP);
@@ -440,7 +424,6 @@ function _simulateHeroTurn(hero, aliveEnemies, aliveHeroes) {
         return;
     }
 
-    // Single target
     const target = aliveEnemies[0];
     if (target) {
         const baseDmg = Math.max(1, (hero.atk || 50) - Math.floor((target.def || 0) * 0.4));
@@ -451,11 +434,8 @@ function _simulateHeroTurn(hero, aliveEnemies, aliveHeroes) {
 
 function _simulateEnemyTurn(enemy, aliveHeroes) {
     enemy.mana = (enemy.mana || 0) + 10;
-
-    // Target the lowest-HP hero
     const target = aliveHeroes.sort((a, b) => a.currentHP - b.currentHP)[0];
     if (!target) return;
-
     const rawDmg = Math.max(1, (enemy.atk || 30) - Math.floor((target.def || 0) * 0.3));
     const dmg    = Math.floor(rawDmg * (0.85 + Math.random() * 0.3));
     target.takeDamage(dmg);
@@ -465,15 +445,11 @@ function _headlessUltimate(hero, aliveEnemies, aliveHeroes) {
     switch (hero.class) {
         case 'Healer': {
             const healAmt = Math.floor(hero.maxHP * 0.30);
-            aliveHeroes.forEach(h => {
-                h.currentHP = Math.min(h.maxHP, h.currentHP + healAmt);
-            });
+            aliveHeroes.forEach(h => { h.currentHP = Math.min(h.maxHP, h.currentHP + healAmt); });
             break;
         }
         case 'Tank': {
-            aliveHeroes.forEach(h => {
-                h.shieldHP = (h.shieldHP || 0) + Math.floor(hero.maxHP * 0.20);
-            });
+            aliveHeroes.forEach(h => { h.shieldHP = (h.shieldHP || 0) + Math.floor(hero.maxHP * 0.20); });
             break;
         }
         case 'Buffer': {
@@ -490,11 +466,7 @@ function _headlessUltimate(hero, aliveEnemies, aliveHeroes) {
             break;
         }
         default: {
-            // Single-target big hit
-            if (aliveEnemies.length > 0) {
-                const target = aliveEnemies[0];
-                target.takeDamage(Math.floor(hero.atk * 3.2));
-            }
+            if (aliveEnemies.length > 0) aliveEnemies[0].takeDamage(Math.floor(hero.atk * 3.2));
         }
     }
 }
@@ -529,7 +501,6 @@ window.claimDungeonRewards = function() {
     }
 
     showToast(`✨ ${run.dungeon.name} complete! +${formatNumber(run.rewards.gold)} Gold`, 'success');
-
     saveGame(gs);
     updateUI(gs);
 
@@ -548,8 +519,8 @@ window.exitDungeon = function() {
 
 function _consumeDungeonAttempt(gs, dungeonId) {
     if (!gs.dungeonData) gs.dungeonData = {};
-    const today  = _todayStr();
-    const prev   = gs.dungeonData[dungeonId];
+    const today   = _todayStr();
+    const prev    = gs.dungeonData[dungeonId];
     const curUsed = (prev && prev.date === today) ? (prev.used || 0) : 0;
     gs.dungeonData[dungeonId] = { date: today, used: curUsed + 1 };
 }
