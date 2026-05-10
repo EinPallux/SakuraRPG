@@ -30,6 +30,7 @@ function renderDungeons(gameState) {
         const elColor = _dungeonElColor(d.element);
         const dc      = diffColor[d.difficulty] || '#94a3b8';
         const dbg     = diffBg[d.difficulty]    || '#f8fafc';
+        const btnOnclick = left > 0 ? "enterDungeon('" + d.id + "')" : '';
 
         return `
             <div class="dungeon-card" style="--el-accent:${elColor.accent};">
@@ -66,11 +67,9 @@ function renderDungeons(gameState) {
                 </div>
 
                 <button class="dungeon-enter-btn ${left > 0 ? 'available' : 'exhausted'}"
-                        onclick="${left > 0 ? `enterDungeon('${d.id}')` : ''}"
+                        onclick="${btnOnclick}"
                         ${left <= 0 ? 'disabled' : ''}>
-                    ${left > 0
-                        ? `<i class="fa-solid fa-dungeon mr-2"></i> Enter Dungeon`
-                        : `<i class="fa-solid fa-moon mr-2"></i> Resets Tomorrow`}
+                    ${left > 0 ? '<i class="fa-solid fa-dungeon mr-2"></i> Enter Dungeon' : '<i class="fa-solid fa-moon mr-2"></i> Resets Tomorrow'}
                 </button>
             </div>
         `;
