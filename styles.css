@@ -552,14 +552,409 @@ html {
     100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
 }
 
-/* --- 5. Garden & Forge Styles --- */
+/* --- 5. Garden System v2 --- */
 
+/* Header */
+.gdn-header {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%);
+    border: 1px solid #bbf7d0;
+    border-radius: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.gdn-icon-wrap {
+    width: 3.5rem;
+    height: 3.5rem;
+    background: white;
+    border: 2px solid #86efac;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(34,197,94,0.15);
+}
+
+.gdn-level-badge {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+}
+
+.gdn-ready-badge {
+    background: #fef3c7;
+    color: #d97706;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    animation: pulse 2s infinite;
+}
+
+/* XP / Water bars */
+.gdn-xp-track {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.gdn-xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+.gdn-water-track {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.gdn-water-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #60a5fa, #3b82f6);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+/* Stat cards */
+.gdn-stat-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* Tab bar */
+.gdn-tab-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.gdn-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1.1rem;
+    border-radius: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+}
+.gdn-tab-btn:hover { border-color: #22c55e; color: #16a34a; }
+.gdn-tab-btn.active {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 2px 8px rgba(34,197,94,0.3);
+}
+.gdn-tab-badge {
+    background: #fbbf24;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    margin-left: 0.2rem;
+}
+
+/* Mode hint */
+.gdn-mode-hint {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 0.75rem;
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+    color: #166534;
+}
+.gdn-mode-hint.seed-mode  { background: #fef9c3; border-color: #fde047; color: #713f12; }
+.gdn-mode-hint.fert-mode  { background: #fdf4ff; border-color: #e879f9; color: #701a75; }
+
+/* Action buttons */
+.gdn-action-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 1rem;
+    border-radius: 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+}
+.gdn-action-btn.harvest { background: #fef3c7; color: #92400e; }
+.gdn-action-btn.harvest:hover { background: #fde68a; }
+.gdn-action-btn.water   { background: #eff6ff; color: #1e40af; }
+.gdn-action-btn.water:hover   { background: #dbeafe; }
+.gdn-action-btn.cancel  { background: #fef2f2; color: #991b1b; }
+.gdn-action-btn.cancel:hover  { background: #fee2e2; }
+
+/* Plot grid */
+.gdn-plot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.75rem;
+}
+
+/* Individual plot */
+.gdn-plot {
+    aspect-ratio: 1;
+    border-radius: 1rem;
+    border: 2px dashed #86efac;
+    background: #f0fdf4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.gdn-plot.empty { border-style: dashed; }
+.gdn-plot.empty:hover { border-color: #22c55e; background: #dcfce7; transform: scale(1.02); }
+.gdn-plot.plantable { border-color: #86efac; border-style: solid; background: #dcfce7; animation: pulse 2s infinite; }
+.gdn-plot.plantable:hover { transform: scale(1.04); box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
+
+.gdn-plot.locked { background: #f8fafc; border-color: #cbd5e1; cursor: pointer; opacity: 0.8; }
+.gdn-plot.locked:hover { border-color: #94a3b8; background: #f1f5f9; }
+.gdn-plot.greenhouse-locked { cursor: not-allowed; }
+.gdn-plot.greenhouse-locked:hover { transform: none; border-color: #cbd5e1; background: #f8fafc; }
+
+.gdn-plot.growing { background: #f0fdf4; border-color: #86efac; border-style: solid; }
+.gdn-plot.growing.has-element { border-color: var(--el-color, #86efac); }
+.gdn-plot.growing.waterable:hover { box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
+.gdn-plot.growing.fertilizable:hover { box-shadow: 0 0 0 3px rgba(168,85,247,0.3); }
+
+.gdn-plot.ready {
+    background: linear-gradient(135deg, #fef9c3, #fefce8);
+    border-color: #fbbf24;
+    border-style: solid;
+    box-shadow: 0 0 12px rgba(251,191,36,0.35);
+    cursor: pointer;
+}
+.gdn-plot.ready.elemental-glow {
+    box-shadow: 0 0 16px color-mix(in srgb, var(--el-color, #fbbf24) 40%, transparent);
+}
+.gdn-plot.ready:hover { transform: scale(1.04); box-shadow: 0 6px 20px rgba(251,191,36,0.4); }
+
+.gdn-ready-shine {
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: #92400e;
+    background: #fde68a;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    margin-top: 0.25rem;
+}
+
+/* Plot badges (watered / fertilized indicators) */
+.gdn-plot-badge {
+    position: absolute;
+    top: 4px;
+    font-size: 0.7rem;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+.gdn-plot-badge.water-badge { left: 4px; }
+.gdn-plot-badge.fert-badge  { right: 4px; }
+
+/* Progress bar inside plot */
+.gdn-progress-track {
+    width: 80%;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.gdn-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 1s linear;
+}
+
+/* Pips (small status indicators) */
+.gdn-pip {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+.gdn-pip.water      { background: #dbeafe; color: #1e40af; }
+.gdn-pip.fert       { background: #f3e8ff; color: #6b21a8; }
+.gdn-pip.water-hint { background: #e0f2fe; color: #0369a1; opacity: 0.6; }
+.gdn-pip.fert-hint  { background: #f5f3ff; color: #7c3aed; opacity: 0.6; }
+
+/* Rarity divider */
+.gdn-rarity-divider {
+    display: flex;
+    align-items: center;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--rc, #94a3b8);
+    margin-bottom: 0.5rem;
+}
+.gdn-rarity-divider::before, .gdn-rarity-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rc, #94a3b8);
+    opacity: 0.3;
+    margin: 0 0.5rem;
+}
+
+/* Seed cards */
+.gdn-seed-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.875rem;
+    padding: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    text-align: center;
+    min-height: 110px;
+    justify-content: center;
+}
+.gdn-seed-card:hover:not(.locked) { border-color: var(--rc, #22c55e); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.gdn-seed-card.selected { border-color: var(--rc, #22c55e); background: color-mix(in srgb, var(--rc, #22c55e) 8%, white); box-shadow: 0 0 0 3px color-mix(in srgb, var(--rc, #22c55e) 20%, transparent); }
+.gdn-seed-card.has-stock { border-color: color-mix(in srgb, var(--rc, #22c55e) 40%, #e2e8f0); }
+.gdn-seed-card.locked { opacity: 0.55; cursor: not-allowed; background: #f8fafc; }
+
+.gdn-seed-emoji { font-size: 1.75rem; line-height: 1; }
+.gdn-seed-info { width: 100%; }
+.gdn-seed-name  { font-size: 0.72rem; font-weight: 700; color: #334155; line-height: 1.2; }
+.gdn-seed-yield { font-size: 0.65rem; color: #64748b; margin-top: 0.1rem; }
+.gdn-seed-time  { font-size: 0.6rem; color: #94a3b8; font-family: monospace; }
+.gdn-seed-qty {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 999px;
+}
+.gdn-seed-qty.has   { background: #22c55e; color: white; }
+.gdn-seed-qty.empty { background: #e2e8f0; color: #94a3b8; }
+.gdn-seed-lock {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #94a3b8;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 0.2rem;
+}
+.gdn-water-hint-tag {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 2px 5px;
+    border-radius: 999px;
+}
+
+/* Fertilizer cards */
+.gdn-fert-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.875rem;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.gdn-fert-card:hover { border-color: var(--rc, #8b5cf6); transform: translateY(-1px); }
+.gdn-fert-card.selected { border-color: var(--rc, #8b5cf6); background: color-mix(in srgb, var(--rc, #8b5cf6) 6%, white); box-shadow: 0 0 0 3px color-mix(in srgb, var(--rc, #8b5cf6) 20%, transparent); }
+
+/* Tea cards */
+.gdn-tea-card {
+    background: #fefce8;
+    border: 1.5px solid #fde047;
+    border-radius: 0.875rem;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Shop cards */
+.gdn-shop-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.15s;
+}
+.gdn-shop-card.unlock-card { border-color: #86efac; background: #f0fdf4; }
+.gdn-shop-card.owned { background: #f8fafc; opacity: 0.75; }
+.gdn-buy-btn {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border: none;
+    border-radius: 0.625rem;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+}
+.gdn-buy-btn:hover:not(.disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(34,197,94,0.4); }
+.gdn-buy-btn.disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+
+/* Upgrade badge (shown on plot tab) */
+.gdn-upgrade-badge {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    color: #166534;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+}
+
+/* Legacy compat */
 .plot-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 1rem;
 }
-
 .garden-plot {
     aspect-ratio: 1;
     background: #F0FDF4;
@@ -574,18 +969,7 @@ html {
     position: relative;
     overflow: hidden;
 }
-
-.garden-plot:hover {
-    border-color: #22C55E;
-    background: #DCFCE7;
-    transform: scale(1.02);
-}
-
-.garden-plot.locked {
-    background: #F1F5F9;
-    border-color: #CBD5E1;
-    cursor: not-allowed;
-}
+.garden-plot.locked { background: #F1F5F9; border-color: #CBD5E1; cursor: not-allowed; }
 
 /* Forge Placeholder */
 .forge-slot {
