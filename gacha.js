@@ -1,159 +1,191 @@
 /* =========================================
-   SAKURA CHRONICLES - GACHA SYSTEM v2.0
-   Soft Pity, Better Animation, Expanded UI
+   SAKURA CHRONICLES - GACHA SYSTEM v3.0
+   Cinematic Summon Experience
    ========================================= */
 
-// ===========================
-// GACHA VIEW
-// ===========================
+// ── Rarity Cinema Themes ────────────────────────────────────────────────────
+const GACHA_CINEMA_THEMES = {
+    N:   { bgFrom:'#0b1829', bgTo:'#07111c', aura:'#10b981', beam:'#34d399', label:'Summoning…',      labelClass:'gc-label-n' },
+    R:   { bgFrom:'#080f28', bgTo:'#050a1e', aura:'#3b82f6', beam:'#60a5fa', label:'Rare Summon!',    labelClass:'gc-label-r' },
+    SR:  { bgFrom:'#100722', bgTo:'#080418', aura:'#8b5cf6', beam:'#a78bfa', label:'✦ Super Rare ✦',  labelClass:'gc-label-sr' },
+    SSR: { bgFrom:'#221000', bgTo:'#160a00', aura:'#f59e0b', beam:'#fbbf24', label:'★ SSR Obtained ★', labelClass:'gc-label-ssr' },
+    UR:  { bgFrom:'#180026', bgTo:'#0e001a', aura:'#ec4899', beam:'#f472b6', label:'✦ ULTRA RARE ✦', labelClass:'gc-label-ur' },
+};
+const _rarityColors = { N:'#10b981', R:'#3b82f6', SR:'#8b5cf6', SSR:'#f59e0b', UR:'#ec4899' };
+const _rarityOrder  = ['N','R','SR','SSR','UR'];
+
+// ── Skip-aware async wait ────────────────────────────────────────────────────
+let _gcActive  = false;
+let _gcSkipped = false;
+let _gcSkipFns = [];
+
+function _gcWait(ms) {
+    if (_gcSkipped || ms <= 0) return Promise.resolve();
+    return new Promise(res => {
+        const t = setTimeout(res, ms);
+        _gcSkipFns.push(() => { clearTimeout(t); res(); });
+    });
+}
+
+function _gcSkipAll() {
+    _gcSkipped = true;
+    _gcSkipFns.forEach(fn => fn());
+    _gcSkipFns = [];
+}
+
+window._gcSkipFn = _gcSkipAll;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function _gcGetHighest(results) {
+    let best = 'N';
+    results.forEach(r => {
+        if (_rarityOrder.indexOf(r.rarity) > _rarityOrder.indexOf(best)) best = r.rarity;
+    });
+    return best;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//   GACHA PAGE RENDER
+// ─────────────────────────────────────────────────────────────────────────────
 
 function renderGacha(gameState) {
     const container = document.getElementById('gacha-tab');
     if (!container) return;
 
-    const pityPct = (gameState.pityCounter / HARD_PITY) * 100;
+    const pityPct       = Math.min(100, (gameState.pityCounter / HARD_PITY) * 100);
     const softPityActive = gameState.pityCounter >= SOFT_PITY_START;
-    const pullsLeft = HARD_PITY - gameState.pityCounter;
+    const pullsLeft     = HARD_PITY - gameState.pityCounter;
+    const featuredUR    = HEROES_DATABASE.find(h => h.rarity === 'UR') || HEROES_DATABASE[HEROES_DATABASE.length - 1];
+    const elColor       = ELEMENT_COLORS[featuredUR.element] || ELEMENT_COLORS['Light'];
+    const totalPulls    = gameState.stats?.totalPulls || 0;
+    const ownedSSRPlus  = gameState.roster.filter(h => h.rarity === 'SSR' || h.rarity === 'UR').length;
+    const ownedUR       = gameState.roster.filter(h => h.rarity === 'UR').length;
+    const petals        = gameState.petals || 0;
 
-    // Latest UR hero for the banner art
-    const featuredUR = HEROES_DATABASE.find(h => h.rarity === 'UR') || HEROES_DATABASE[HEROES_DATABASE.length - 1];
-    const featuredEl = ELEMENT_COLORS[featuredUR.element] || ELEMENT_COLORS['Light'];
+    const sparkles = Array.from({length:14}).map(() => {
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        const s = (Math.random() * 0.5 + 0.3).toFixed(2);
+        const d = (Math.random() * 4 + 2).toFixed(1);
+        const size = (Math.random() * 4 + 2).toFixed(0);
+        return `<div class="gch-sparkle" style="left:${x}%;top:${y}%;width:${size}px;height:${size}px;transform:scale(${s});animation-duration:${d}s;animation-delay:${(Math.random()*3).toFixed(1)}s"></div>`;
+    }).join('');
 
     container.innerHTML = `
-        <div class="max-w-6xl mx-auto animate-entry space-y-6">
+    <div class="gch-page">
 
-            <!-- Banner Hero -->
-            <div class="relative h-72 rounded-2xl overflow-hidden shadow-xl group cursor-pointer" onclick="handleGachaPull(10)">
-                <div class="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600"></div>
-                <div class="absolute inset-0 opacity-20 bg-[url('images/h041.jpg')] bg-cover bg-top scale-110 group-hover:scale-105 transition-transform duration-700"></div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+        <!-- ── Banner ── -->
+        <div class="gch-banner" onclick="handleGachaPull(10)" role="button" aria-label="×10 Summon">
+            <div class="gch-banner-bg" style="background-image:url('images/${featuredUR.id}.jpg')"></div>
+            <div class="gch-banner-overlay"></div>
+            <div class="gch-sparkle-layer">${sparkles}</div>
 
-                <!-- Floating sparkles -->
-                <div class="absolute inset-0 overflow-hidden pointer-events-none">
-                    ${Array.from({length:8}).map(() => {
-                        const x = Math.random() * 100;
-                        const y = Math.random() * 100;
-                        const d = (Math.random() * 3 + 1).toFixed(1);
-                        return `<div class="absolute w-1 h-1 rounded-full bg-white/60 animate-pulse" style="left:${x}%;top:${y}%;animation-duration:${d}s"></div>`;
-                    }).join('')}
+            <div class="gch-banner-badge">✦ Standard Banner</div>
+
+            <div class="gch-banner-info">
+                <div class="gch-banner-subtitle">Legends of Sakura</div>
+                <h2 class="gch-banner-title">SUMMON NOW</h2>
+                <p class="gch-banner-desc">45 unique heroes · Guaranteed SSR at ${HARD_PITY} pulls</p>
+            </div>
+
+            <div class="gch-banner-cta">
+                <i class="fa-solid fa-bolt-lightning"></i> ×10 Pull
+            </div>
+        </div>
+
+        <!-- ── Action Row ── -->
+        <div class="gch-action-row">
+
+            <!-- Pity Card -->
+            <div class="gch-pity-card ${softPityActive ? 'soft-pity-active' : ''}">
+                <div class="gch-pity-header">
+                    <span class="gch-pity-label">Pity Progress</span>
+                    <span class="gch-pity-count ${softPityActive ? 'text-amber' : ''}">${pullsLeft} <em>left</em></span>
                 </div>
-
-                <div class="absolute bottom-6 left-8 text-white z-10">
-                    <div class="text-xs font-bold uppercase tracking-widest text-pink-300 mb-1">✨ Standard Banner</div>
-                    <h2 class="text-5xl font-heading font-bold mb-2 drop-shadow-lg">Legends of Sakura</h2>
-                    <p class="text-sm text-pink-100 max-w-md">Summon from 45 unique heroes. Guaranteed SSR at ${HARD_PITY} pulls.</p>
+                <div class="gch-pity-bar-track">
+                    <div class="gch-pity-bar-fill ${softPityActive ? 'soft' : ''}" style="width:${pityPct}%"></div>
+                    ${softPityActive ? '<div class="gch-soft-pulse"></div>' : ''}
                 </div>
-
-                <div class="absolute top-4 right-4 bg-black/40 backdrop-blur text-white px-4 py-2 rounded-full text-sm font-bold border border-white/20">
-                    Click for ×10 Pull →
+                ${softPityActive ? '<div class="gch-soft-badge">🔥 Soft Pity — SSR Rate Boosted!</div>' : ''}
+                <div class="gch-rate-row">
+                    <div class="gch-rate-item ur">UR <span>0.5%</span></div>
+                    <div class="gch-rate-item ssr">SSR <span>${softPityActive ? '4.5%+' : '4.5%'}</span></div>
+                    <div class="gch-rate-item sr">SR <span>10%</span></div>
+                    <div class="gch-rate-item r">R <span>25%</span></div>
                 </div>
             </div>
 
-            <!-- Pity + Actions Row -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                <!-- Pity Info -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                    <div class="flex justify-between items-end mb-2">
-                        <span class="text-sm font-bold text-slate-500 uppercase tracking-wide">Pity Progress</span>
-                        <span class="text-2xl font-heading font-bold ${softPityActive ? 'text-amber-500' : 'text-pink-500'}">
-                            ${pullsLeft} <span class="text-sm font-normal text-slate-400">pulls left</span>
-                        </span>
-                    </div>
-                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden mb-3">
-                        <div class="h-full rounded-full transition-all duration-700 ${softPityActive ? 'bg-gradient-to-r from-amber-400 to-orange-500' : 'bg-gradient-to-r from-pink-400 to-pink-600'}"
-                             style="width:${pityPct}%"></div>
-                    </div>
-                    ${softPityActive ? '<div class="text-xs text-amber-600 font-bold text-center bg-amber-50 rounded-lg py-1">🔥 Soft Pity Active! SSR rate boosted!</div>' : ''}
-                    <div class="mt-3 grid grid-cols-3 gap-1 text-center text-[10px] text-slate-400">
-                        <div><span class="font-bold text-pink-500">UR</span><br>0.5%</div>
-                        <div><span class="font-bold text-amber-500">SSR</span><br>${softPityActive ? '4.5%+' : '4.5%'}</div>
-                        <div><span class="font-bold text-purple-500">SR</span><br>10%</div>
-                    </div>
+            <!-- ×1 Pull -->
+            <button class="gch-pull-btn gch-pull-one" onclick="handleGachaPull(1)" aria-label="Single summon">
+                <div class="gch-pull-orb">🌸</div>
+                <div class="gch-pull-name">Summon ×1</div>
+                <div class="gch-pull-cost">
+                    <i class="fa-solid fa-spa"></i> 10 Petals
                 </div>
+                <div class="gch-pull-glow"></div>
+            </button>
 
-                <!-- Single Pull -->
-                <button class="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm hover:border-pink-300 hover:shadow-md transition-all group relative overflow-hidden"
-                        onclick="handleGachaPull(1)">
-                    <div class="absolute inset-0 bg-gradient-to-br from-pink-50 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div class="relative z-10 flex flex-col items-center gap-3">
-                        <div class="w-14 h-14 bg-pink-50 rounded-xl flex items-center justify-center text-3xl border border-pink-100 group-hover:scale-110 transition-transform">🌸</div>
-                        <span class="font-bold text-slate-700 text-lg group-hover:text-pink-600">Summon ×1</span>
-                        <div class="flex items-center gap-1.5 bg-pink-50 px-4 py-1.5 rounded-full border border-pink-100 group-hover:bg-pink-100">
-                            <i class="fa-solid fa-spa text-pink-500 text-sm"></i>
-                            <span class="font-bold text-pink-600">10 Petals</span>
-                        </div>
-                    </div>
-                </button>
+            <!-- ×10 Pull -->
+            <button class="gch-pull-btn gch-pull-ten" onclick="handleGachaPull(10)" aria-label="Ten summon">
+                <div class="gch-pull-badge">BEST VALUE</div>
+                <div class="gch-pull-orb gch-pull-orb-trio">🌸🌸🌸</div>
+                <div class="gch-pull-name">Summon ×10</div>
+                <div class="gch-pull-cost gch-pull-cost-gold">
+                    <i class="fa-solid fa-spa"></i> 100 Petals
+                </div>
+                <div class="gch-pull-glow gch-pull-glow-gold"></div>
+            </button>
 
-                <!-- 10 Pull -->
-                <button class="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-2xl border-2 border-amber-200 shadow-sm hover:border-amber-400 hover:shadow-lg transition-all group relative overflow-hidden"
-                        onclick="handleGachaPull(10)">
-                    <div class="absolute top-2 right-2 bg-amber-400 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">BEST VALUE</div>
-                    <div class="relative z-10 flex flex-col items-center gap-3">
-                        <div class="flex gap-1 text-2xl group-hover:scale-110 transition-transform">🌸🌸🌸</div>
-                        <span class="font-bold text-amber-700 text-lg">Summon ×10</span>
-                        <div class="flex items-center gap-1.5 bg-amber-100 px-4 py-1.5 rounded-full border border-amber-200">
-                            <i class="fa-solid fa-spa text-amber-600 text-sm"></i>
-                            <span class="font-bold text-amber-700">100 Petals</span>
-                        </div>
-                    </div>
-                </button>
-            </div>
+        </div>
 
-            <!-- Stats -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide">Summoning History</h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                    <div class="bg-slate-50 rounded-xl p-3">
-                        <div class="text-xl font-bold text-slate-700">${formatNumber(gameState.stats.totalPulls || 0)}</div>
-                        <div class="text-xs text-slate-400 mt-0.5">Total Pulls</div>
-                    </div>
-                    <div class="bg-slate-50 rounded-xl p-3">
-                        <div class="text-xl font-bold text-slate-700">${gameState.roster.length}</div>
-                        <div class="text-xs text-slate-400 mt-0.5">Heroes Owned</div>
-                    </div>
-                    <div class="bg-slate-50 rounded-xl p-3">
-                        <div class="text-xl font-bold text-amber-500">${gameState.roster.filter(h => h.rarity === 'SSR' || h.rarity === 'UR').length}</div>
-                        <div class="text-xs text-slate-400 mt-0.5">SSR+ Owned</div>
-                    </div>
-                    <div class="bg-slate-50 rounded-xl p-3">
-                        <div class="text-xl font-bold text-pink-500">${gameState.roster.filter(h => h.rarity === 'UR').length}</div>
-                        <div class="text-xs text-slate-400 mt-0.5">UR Owned</div>
-                    </div>
+        <!-- ── Stats Card ── -->
+        <div class="gch-stats-card">
+            <h3 class="gch-stats-title"><i class="fa-solid fa-chart-column"></i> Summoning History</h3>
+            <div class="gch-stats-grid">
+                <div class="gch-stat-item">
+                    <div class="gch-stat-val">${formatNumber(totalPulls)}</div>
+                    <div class="gch-stat-lbl">Total Pulls</div>
+                </div>
+                <div class="gch-stat-item">
+                    <div class="gch-stat-val">${gameState.roster.length}</div>
+                    <div class="gch-stat-lbl">Heroes Owned</div>
+                </div>
+                <div class="gch-stat-item ssr-col">
+                    <div class="gch-stat-val">${ownedSSRPlus}</div>
+                    <div class="gch-stat-lbl">SSR+ Owned</div>
+                </div>
+                <div class="gch-stat-item ur-col">
+                    <div class="gch-stat-val">${ownedUR}</div>
+                    <div class="gch-stat-lbl">UR Owned</div>
                 </div>
             </div>
         </div>
-    `;
+
+    </div>`;
 }
 
-// ===========================
-// PULL LOGIC
-// ===========================
+// ─────────────────────────────────────────────────────────────────────────────
+//   PULL LOGIC
+// ─────────────────────────────────────────────────────────────────────────────
 
 function handleGachaPull(count) {
     const cost = count * 10;
-
     if (window.gameState.petals < cost) {
-        showToast(`Not enough Petals! Need ${cost} 🌸`, 'error');
+        showToast(`Need ${cost} Petals — have ${window.gameState.petals} 🌸`, 'error');
         return;
     }
-
     window.gameState.petals -= cost;
     updateCurrencyDisplay(window.gameState);
 
     const results = performPullLogic(count);
     saveGame(window.gameState);
-    playSummonAnimation(results);
+    playSummonCinema(results);
 }
 
 function performPullLogic(count) {
     const results = [];
-
     for (let i = 0; i < count; i++) {
         let rarity;
-
-        // Hard pity
         if (window.gameState.pityCounter >= HARD_PITY) {
             rarity = Math.random() < 0.4 ? 'UR' : 'SSR';
             window.gameState.pityCounter = 0;
@@ -162,22 +194,14 @@ function performPullLogic(count) {
             if (rarity === 'SSR' || rarity === 'UR') window.gameState.pityCounter = 0;
             else window.gameState.pityCounter++;
         }
-
         const heroTemplate = getRandomHeroByRarity(rarity);
         if (heroTemplate) {
             const addResult = window.gameState.addHero(heroTemplate.id);
-            results.push({
-                hero: addResult.hero,
-                isNew: !addResult.isDuplicate,
-                shards: addResult.shards,
-                rarity: rarity
-            });
+            results.push({ hero: addResult.hero, isNew: !addResult.isDuplicate, shards: addResult.shards, rarity });
         }
-
         window.gameState.totalPulls++;
-        window.gameState.stats.totalPulls++;
+        window.gameState.stats.totalPulls = (window.gameState.stats.totalPulls || 0) + 1;
     }
-
     window.gameState.updateQuest('summon', count);
     window.gameState.checkAchievements();
     return results;
@@ -186,15 +210,12 @@ function performPullLogic(count) {
 function rollRarity(pityCount) {
     const roll = Math.random() * 100;
     let cumulative = 0;
-
-    // Soft pity: linearly increase SSR rate from pull 40 to 50
     let rates = { ...GACHA_RATES };
     if (pityCount >= SOFT_PITY_START) {
         const softBoost = (pityCount - SOFT_PITY_START + 1) * 2.0;
         rates['SSR'] = GACHA_RATES['SSR'] + softBoost;
-        rates['N'] = Math.max(20, GACHA_RATES['N'] - softBoost);
+        rates['N']   = Math.max(20, GACHA_RATES['N'] - softBoost);
     }
-
     for (const [rarity, rate] of Object.entries(rates)) {
         cumulative += rate;
         if (roll <= cumulative) return rarity;
@@ -207,203 +228,385 @@ function getRandomHeroByRarity(rarity) {
     return pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : HEROES_DATABASE[0];
 }
 
-// ===========================
-// SUMMON ANIMATION
-// ===========================
+// ─────────────────────────────────────────────────────────────────────────────
+//   CINEMA ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
 
-function playSummonAnimation(results) {
-    const modal    = document.getElementById('modal-overlay');
-    const modalBody    = document.getElementById('modal-body');
-    const modalContent = document.getElementById('modal-content');
-    if (!modal || !modalBody) return;
+async function playSummonCinema(results) {
+    if (_gcActive) return;
+    _gcActive  = true;
+    _gcSkipped = false;
+    _gcSkipFns = [];
 
-    const highestRarity = results.some(r => r.rarity === 'UR') ? 'UR' :
-                          results.some(r => r.rarity === 'SSR') ? 'SSR' :
-                          results.some(r => r.rarity === 'SR') ? 'SR' :
-                          results.some(r => r.rarity === 'R') ? 'R' : 'N';
+    const best  = _gcGetHighest(results);
+    const theme = GACHA_CINEMA_THEMES[best];
+    const isSSRPlus = best === 'SSR' || best === 'UR';
+    const isSingle  = results.length === 1;
 
-    const beamColors = { N:'#10B981', R:'#3B82F6', SR:'#8B5CF6', SSR:'#F59E0B', UR:'#EC4899' };
-    const beamColor = beamColors[highestRarity];
+    // ── Build root ───────────────────────────────────────────────────────────
+    const root = document.createElement('div');
+    root.id = 'gc-root';
+    root.className = 'gc-root';
+    root.style.background = `radial-gradient(ellipse at center, ${theme.bgFrom} 0%, ${theme.bgTo} 100%)`;
+    document.body.appendChild(root);
 
-    modalBody.innerHTML = `
-        <div id="gacha-stage" class="h-[680px] flex items-center justify-center bg-slate-950 relative overflow-hidden select-none">
-            <div class="absolute inset-0 bg-gradient-radial from-purple-900/30 via-slate-900 to-slate-950"></div>
-
-            <div id="gacha-particles" class="absolute inset-0 z-10 pointer-events-none overflow-hidden"></div>
-
-            <div id="shrine-gate" class="relative z-20 flex flex-col items-center justify-end">
-                <div class="w-72 h-[22rem] bg-slate-800/80 border-4 border-slate-600/50 relative flex items-center justify-center shadow-2xl overflow-hidden rounded-t-2xl backdrop-blur">
-                    <i class="fa-solid fa-torii-gate text-[8rem] text-slate-700/40"></i>
-                    <div id="summon-beam" class="gacha-beam" style="background: linear-gradient(to top, ${beamColor}, white); box-shadow: 0 0 80px ${beamColor};"></div>
-                </div>
-                <div class="w-96 h-5 bg-slate-700 rounded-full shadow-2xl"></div>
-            </div>
-
-            <div id="gacha-flash" class="absolute inset-0 bg-white opacity-0 z-50 pointer-events-none"></div>
-
-            <div class="absolute bottom-6 text-slate-500 text-sm font-medium animate-pulse">Summoning...</div>
+    root.innerHTML = `
+        <div class="gc-starfield" id="gc-sf"></div>
+        <div class="gc-nebula" id="gc-nb"></div>
+        <div class="gc-summon-area" id="gc-sa">
+            <div class="gc-ring gc-ring-outer" id="gc-ro" style="border-color:${theme.aura}30"></div>
+            <div class="gc-ring gc-ring-inner" id="gc-ri" style="border-color:${theme.aura}55"></div>
+            <div class="gc-orb" id="gc-ob" style="--orb-color:${theme.aura};--orb-glow:${theme.beam}"></div>
         </div>
+        <div class="gc-beam" id="gc-bm" style="background:linear-gradient(to top, ${theme.aura}, ${theme.beam}, white);box-shadow:0 0 120px 40px ${theme.aura}80"></div>
+        <div class="gc-ptcl" id="gc-pt"></div>
+        <div class="gc-conv" id="gc-cv-ptcl"></div>
+        <div class="gc-flash" id="gc-fl"></div>
+        <div class="gc-canvas" id="gc-cv"></div>
+        <div class="gc-hud">
+            <div class="gc-hud-label ${theme.labelClass}" id="gc-lb">${theme.label}</div>
+        </div>
+        <button class="gc-skip" id="gc-skip-btn" onclick="window._gcSkipFn()">
+            <i class="fa-solid fa-forward"></i> Skip
+        </button>
     `;
 
-    modal.classList.remove('hidden');
-    requestAnimationFrame(() => {
-        modal.classList.remove('opacity-0', 'pointer-events-none');
-        modalContent.classList.remove('scale-95');
-        modalContent.classList.add('scale-100');
-    });
+    requestAnimationFrame(() => root.classList.add('gc-root-visible'));
 
-    const closeBtn = document.querySelector('.modal-close-btn');
-    if (closeBtn) closeBtn.style.display = 'none';
+    // ── Stars ─────────────────────────────────────────────────────────────────
+    const sfEl = document.getElementById('gc-sf');
+    for (let i = 0; i < 140; i++) {
+        const s = document.createElement('div');
+        s.className = 'gc-star';
+        s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${Math.random()*2.5+0.5}px;height:${Math.random()*2.5+0.5}px;animation-delay:${(Math.random()*4).toFixed(2)}s;animation-duration:${(Math.random()*3+2).toFixed(2)}s`;
+        sfEl.appendChild(s);
+    }
 
-    // Phase 1: Shake & particles
-    setTimeout(() => {
-        const shrine = document.getElementById('shrine-gate');
-        if (shrine) shrine.classList.add('animate-shake-charging');
-        spawnSummonParticles(document.getElementById('gacha-particles'), beamColor);
-    }, 400);
+    // ── Nebula blobs ──────────────────────────────────────────────────────────
+    const nbEl = document.getElementById('gc-nb');
+    const nbColors = [theme.aura, theme.beam, '#ffffff'];
+    for (let i = 0; i < 4; i++) {
+        const b = document.createElement('div');
+        b.className = 'gc-nebula-blob';
+        b.style.cssText = `background:radial-gradient(circle, ${nbColors[i%3]}22 0%, transparent 70%);width:${250+Math.random()*200}px;height:${250+Math.random()*200}px;left:${Math.random()*80}%;top:${Math.random()*80}%;animation-delay:${(Math.random()*3).toFixed(1)}s`;
+        nbEl.appendChild(b);
+    }
 
-    // Phase 2: Beam
-    setTimeout(() => {
-        const beam = document.getElementById('summon-beam');
-        if (beam) {
-            beam.style.width = '20px';
-            beam.style.height = '0%';
-            beam.style.opacity = '1';
-            beam.style.transition = 'none';
-            void beam.offsetWidth;
-            beam.style.transition = 'width 1.2s ease-out, height 0.6s ease-in';
-            beam.style.height = '100%';
-            beam.style.width = highestRarity === 'UR' ? '280px' : highestRarity === 'SSR' ? '200px' : '120px';
-        }
-    }, 1800);
+    const orbEl = document.getElementById('gc-ob');
+    const riEl  = document.getElementById('gc-ri');
+    const roEl  = document.getElementById('gc-ro');
+    const lbEl  = document.getElementById('gc-lb');
+    const bmEl  = document.getElementById('gc-bm');
+    const flEl  = document.getElementById('gc-fl');
+    const ptEl  = document.getElementById('gc-pt');
+    const cvEl  = document.getElementById('gc-cv');
+    const cvPtEl= document.getElementById('gc-cv-ptcl');
 
-    // Phase 3: Flash
-    setTimeout(() => {
-        const flash = document.getElementById('gacha-flash');
-        if (!flash) return;
-        if (highestRarity === 'UR') flash.style.background = 'linear-gradient(45deg, #ec4899, #8b5cf6, #f59e0b, #10b981)';
-        else if (highestRarity === 'SSR') flash.style.background = '#FEF9C3';
-        else flash.style.background = 'white';
-        flash.style.animation = 'screen-flash-white 0.6s ease-out forwards';
-    }, 3200);
+    // ── Phase 1: Ambient warm-up ──────────────────────────────────────────────
+    await _gcWait(500);
 
-    // Phase 4: Results
-    setTimeout(() => {
-        showGachaResults(results);
-        if (closeBtn) closeBtn.style.display = 'flex';
-    }, 3900);
+    // ── Phase 2: Orb appears + rings spin ────────────────────────────────────
+    orbEl.classList.add('gc-orb-appear');
+    riEl.classList.add('gc-ring-spin-inner');
+    roEl.classList.add('gc-ring-spin-outer');
+
+    // converging particles
+    _gcConvParticles(cvPtEl, theme.aura, 30);
+    await _gcWait(900);
+
+    // ── Phase 3: Anticipation (SSR/UR) ───────────────────────────────────────
+    if (isSSRPlus) {
+        lbEl.textContent = best === 'UR' ? '✦ Something Legendary Stirs…' : '⚡ A Powerful Presence…';
+        orbEl.classList.add('gc-orb-charge');
+        roEl.style.animation = 'gc-ring-spin-cw 0.4s linear infinite';
+        riEl.style.animation = 'gc-ring-spin-ccw 0.4s linear infinite';
+        await _gcWait(best === 'UR' ? 1400 : 900);
+    }
+
+    // ── Phase 4: UR Blackout ──────────────────────────────────────────────────
+    if (best === 'UR' && !_gcSkipped) {
+        const bo = document.createElement('div');
+        bo.className = 'gc-blackout';
+        root.appendChild(bo);
+        requestAnimationFrame(() => bo.style.opacity = '0.92');
+        await _gcWait(500);
+        bo.style.opacity = '0';
+        await _gcWait(600);
+        bo.remove();
+    }
+
+    // ── Phase 5: Burst ────────────────────────────────────────────────────────
+    lbEl.textContent = theme.label;
+    lbEl.className   = `gc-hud-label ${theme.labelClass} gc-label-burst`;
+
+    orbEl.classList.add('gc-orb-burst');
+    roEl.classList.add('gc-ring-expand');
+    riEl.classList.add('gc-ring-expand');
+
+    _gcBurstParticles(ptEl, theme.aura, best);
+
+    const beamWidth = { N:60, R:100, SR:150, SSR:230, UR:340 }[best] || 100;
+    bmEl.style.width   = `${beamWidth}px`;
+    bmEl.style.opacity = '1';
+    bmEl.classList.add('gc-beam-fire');
+
+    await _gcWait(400);
+
+    // ── Phase 6: Flash ────────────────────────────────────────────────────────
+    if (best === 'UR') {
+        flEl.style.background = 'conic-gradient(from 0deg, #ec4899, #8b5cf6, #f59e0b, #10b981, #3b82f6, #ec4899)';
+    } else if (best === 'SSR') {
+        flEl.style.background = `radial-gradient(circle, #fef3c7, ${theme.beam}, ${theme.aura})`;
+    } else {
+        flEl.style.background = `radial-gradient(circle, white, ${theme.beam})`;
+    }
+    flEl.classList.add('gc-flash-on');
+    await _gcWait(180);
+    flEl.classList.remove('gc-flash-on');
+    flEl.classList.add('gc-flash-off');
+
+    await _gcWait(220);
+
+    // ── Phase 7: Reveal ───────────────────────────────────────────────────────
+    // Fade out animation elements
+    orbEl.style.opacity  = '0';
+    bmEl.style.opacity   = '0';
+    ptEl.style.opacity   = '0';
+    cvPtEl.style.opacity = '0';
+
+    if (isSingle) {
+        await _gcRevealOne(cvEl, results[0], best, root, theme);
+    } else {
+        await _gcRevealGrid(cvEl, results, best, root, theme);
+    }
+
+    // ── Phase 8: Actions ──────────────────────────────────────────────────────
+    const skipBtn = document.getElementById('gc-skip-btn');
+    if (skipBtn) skipBtn.style.display = 'none';
+
+    _gcActive  = false;
+    _gcSkipped = false;
+    _gcSkipFns = [];
 }
 
-function spawnSummonParticles(container, color) {
+// ─────────────────────────────────────────────────────────────────────────────
+//   PARTICLE SYSTEMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function _gcConvParticles(container, color, count) {
     if (!container) return;
-    for (let i = 0; i < 50; i++) {
-        setTimeout(() => {
-            const p = document.createElement('div');
-            const size = Math.random() * 8 + 3;
-            p.style.cssText = `
-                position: absolute;
-                width: ${size}px; height: ${size}px;
-                border-radius: 50%;
-                background: ${color};
-                box-shadow: 0 0 ${size * 2}px ${color};
-                left: ${15 + Math.random() * 70}%;
-                bottom: ${80 + Math.random() * 50}px;
-                animation: float-up-fast ${1 + Math.random()}s ease-out forwards;
-                opacity: 0.8;
-            `;
-            container.appendChild(p);
-            setTimeout(() => p.remove(), 2000);
-        }, Math.random() * 1500);
+    for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'gc-conv-particle';
+        const edge = Math.floor(Math.random() * 4);
+        let sx, sy;
+        if (edge === 0) { sx = Math.random() * 100; sy = -5; }
+        else if (edge === 1) { sx = 105; sy = Math.random() * 100; }
+        else if (edge === 2) { sx = Math.random() * 100; sy = 105; }
+        else { sx = -5; sy = Math.random() * 100; }
+        p.style.cssText = `left:${sx}%;top:${sy}%;background:${color};box-shadow:0 0 6px ${color};transition:transform ${(1.5+Math.random()).toFixed(2)}s ease-in;transition-delay:${(Math.random()*0.8).toFixed(2)}s`;
+        container.appendChild(p);
+        requestAnimationFrame(() => {
+            const dx = 50 - sx;
+            const dy = 50 - sy;
+            p.style.transform = `translate(${dx * 4}px, ${dy * 4}px) scale(0)`;
+        });
+        setTimeout(() => p.remove(), 2500);
     }
 }
 
-// ===========================
-// RESULTS DISPLAY
-// ===========================
+function _gcBurstParticles(container, color, rarity) {
+    if (!container) return;
+    const n = { N:28, R:40, SR:55, SSR:70, UR:100 }[rarity] || 40;
+    for (let i = 0; i < n; i++) {
+        const p = document.createElement('div');
+        const angle = Math.random() * Math.PI * 2;
+        const dist  = 80 + Math.random() * 350;
+        const x = Math.cos(angle) * dist;
+        const y = Math.sin(angle) * dist;
+        const size = Math.random() * 8 + 3;
+        const dur  = (0.6 + Math.random() * 0.8).toFixed(2);
+        const colors = rarity === 'UR'
+            ? ['#ec4899','#8b5cf6','#f59e0b','#f472b6','#c084fc','#fbbf24']
+            : [color, color + 'cc', '#ffffff'];
+        const c = colors[Math.floor(Math.random() * colors.length)];
+        p.className = 'gc-burst-particle';
+        p.style.cssText = `width:${size}px;height:${size}px;background:${c};box-shadow:0 0 ${size*2}px ${c};--x:${x}px;--y:${y}px;animation-duration:${dur}s;animation-delay:${(Math.random()*0.2).toFixed(2)}s`;
+        container.appendChild(p);
+        setTimeout(() => p.remove(), 1200);
+    }
+}
 
-function showGachaResults(results) {
-    const modalBody = document.getElementById('modal-body');
-    modalBody.innerHTML = '';
+// ─────────────────────────────────────────────────────────────────────────────
+//   CARD REVEALS
+// ─────────────────────────────────────────────────────────────────────────────
 
-    const container = document.createElement('div');
-    container.className = 'bg-gradient-to-b from-slate-900 to-slate-800 p-8 text-center min-h-[600px] flex flex-col';
+async function _gcRevealOne(container, result, best, root, theme) {
+    const elColor = ELEMENT_COLORS[result.hero.element] || ELEMENT_COLORS['Fire'];
+    const shine   = (best === 'SSR' || best === 'UR') ? '<div class="gc-card-shine"></div>' : '';
+    const stars   = _gcRarityStars(result.rarity);
 
-    // Title
-    const hasUR  = results.some(r => r.rarity === 'UR');
-    const hasSSR = results.some(r => r.rarity === 'SSR');
-    const titleEl = document.createElement('h3');
-    titleEl.className = `text-3xl font-heading font-bold mb-6 ${hasUR ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-amber-400' : hasSSR ? 'text-amber-400' : 'text-white'}`;
-    titleEl.textContent = hasUR ? '✨ ULTRA RARE OBTAINED! ✨' : hasSSR ? '⭐ SSR OBTAINED! ⭐' : 'Summoning Results';
-    container.appendChild(titleEl);
-
-    // Grid
-    const grid = document.createElement('div');
-    grid.className = 'grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 flex-1';
-
-    results.forEach((r, idx) => {
-        const elColor = ELEMENT_COLORS[r.hero.element] || ELEMENT_COLORS['Fire'];
-        const rarityGlows = { UR:'ring-4 ring-pink-400 shadow-pink-400/50', SSR:'ring-2 ring-amber-400 shadow-amber-400/50', SR:'ring-1 ring-purple-400', R:'ring-1 ring-blue-400', N:'ring-1 ring-emerald-400' };
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'flex flex-col items-center animate-entry';
-        wrapper.style.animationDelay = `${idx * 0.08}s`;
-
-        const rarityGlow = rarityGlows[r.rarity] || '';
-
-        wrapper.innerHTML = `
-            <div class="w-full aspect-[3/4] relative rounded-xl overflow-hidden shadow-xl ${rarityGlow} group cursor-pointer mb-2">
-                <img src="images/${r.hero.id}.jpg"
-                     class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                     onerror="this.parentElement.innerHTML='<div class=\'absolute inset-0 bg-gradient-to-br ${elColor.from} ${elColor.to} flex items-center justify-center text-white text-4xl font-bold\'>${r.hero.name.substring(0,2).toUpperCase()}</div>'">
-
-                <div class="absolute top-2 left-2 right-2 flex justify-between">
-                    ${r.isNew ? '<span class="bg-green-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-md animate-bounce">NEW!</span>' :
-                               `<span class="bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-md">+${r.shards} ✨</span>`}
-                    <span class="badge-${r.rarity} text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-md">${r.rarity}</span>
-                </div>
-
-                ${r.rarity === 'UR' || r.rarity === 'SSR' ? `
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent">
-                    <div class="absolute bottom-0 inset-x-0 p-2">
-                        <div class="text-white text-xs font-bold truncate">${r.hero.name}</div>
-                        <div class="text-[9px] ${elColor.text} font-bold">${elColor.emoji} ${r.hero.element}</div>
+    container.innerHTML = `
+        <div class="gc-reveal-single">
+            <div class="gc-card-wrap" id="gc-cw">
+                <div class="gc-flip-inner" id="gc-fi">
+                    <div class="gc-face gc-face-back">
+                        <div class="gc-back-orb" style="background:radial-gradient(circle, ${theme.beam}44, ${theme.aura}22, transparent);box-shadow:0 0 60px 20px ${theme.aura}55"></div>
+                        <div class="gc-back-rune"></div>
                     </div>
-                </div>` : `
-                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                    <div class="text-white text-xs font-bold truncate">${r.hero.name}</div>
-                </div>`}
+                    <div class="gc-face gc-face-front gc-rarity-${result.rarity}">
+                        <img class="gc-hero-img" src="images/${result.hero.id}.jpg"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        <div class="gc-hero-fallback" style="background:linear-gradient(135deg, ${elColor.from.replace('from-','')}, ${elColor.to.replace('to-','')})">
+                            <span>${result.hero.name.substring(0,2).toUpperCase()}</span>
+                        </div>
+                        ${shine}
+                        <div class="gc-hero-overlay">
+                            <div class="gc-hero-rarity-badge gc-rb-${result.rarity}">${result.rarity}</div>
+                            <div class="gc-hero-stars">${stars}</div>
+                            <div class="gc-hero-name">${result.hero.name}</div>
+                            <div class="gc-hero-meta">
+                                <span class="gc-hero-class">${result.hero.class}</span>
+                                <span class="gc-hero-element ${elColor.text}">${elColor.emoji} ${result.hero.element}</span>
+                            </div>
+                            ${result.isNew
+                                ? '<div class="gc-hero-new-badge">✦ NEW HERO ✦</div>'
+                                : `<div class="gc-hero-shard-badge">+${result.shards} ✨ Shards</div>`}
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="text-slate-300 text-xs font-medium">${r.hero.class}</div>
-        `;
+        </div>
+    `;
 
-        grid.appendChild(wrapper);
-    });
+    await _gcWait(200);
+    const fi = document.getElementById('gc-fi');
+    if (fi) fi.classList.add('gc-flipped');
 
-    container.appendChild(grid);
+    await _gcWait(800);
+    _gcShowSingleActions(container, result, root);
+}
 
-    // Buttons
-    const btnRow = document.createElement('div');
-    btnRow.className = 'flex gap-3 justify-center';
+async function _gcRevealGrid(container, results, best, root, theme) {
+    const cols = results.length <= 5 ? results.length : Math.ceil(results.length / 2);
 
-    const pullAgainBtn = document.createElement('button');
-    pullAgainBtn.className = 'btn bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-3 text-base shadow-lg hover:scale-105 transition-transform';
-    pullAgainBtn.innerHTML = '<i class="fa-solid fa-rotate-right mr-2"></i> Pull Again';
-    pullAgainBtn.onclick = () => {
-        closeModal();
-        setTimeout(() => handleGachaPull(results.length), 100);
-    };
+    container.innerHTML = `
+        <div class="gc-reveal-grid" style="--gc-cols:${Math.min(cols, 5)}">
+            ${results.map((r, i) => {
+                const elColor = ELEMENT_COLORS[r.hero.element] || ELEMENT_COLORS['Fire'];
+                return `
+                <div class="gc-mini-wrap" id="gc-mw-${i}">
+                    <div class="gc-mini-inner" id="gc-mi-${i}">
+                        <div class="gc-mini-back" style="border-color:${theme.aura}44">
+                            <div class="gc-mini-back-glow" style="background:${theme.aura}33"></div>
+                        </div>
+                        <div class="gc-mini-front gc-rarity-${r.rarity}">
+                            <img class="gc-mini-img" src="images/${r.hero.id}.jpg"
+                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                            <div class="gc-mini-fallback" style="background:linear-gradient(135deg,${elColor.from.replace('from-','')},${elColor.to.replace('to-','')})">
+                                <span>${r.hero.name.substring(0,2).toUpperCase()}</span>
+                            </div>
+                            <div class="gc-mini-overlay">
+                                <div class="gc-mini-rb gc-rb-${r.rarity}">${r.rarity}</div>
+                                <div class="gc-mini-name">${r.hero.name}</div>
+                                ${r.isNew ? '<div class="gc-mini-new">NEW!</div>' : `<div class="gc-mini-shards">+${r.shards}✨</div>`}
+                            </div>
+                            ${r.rarity === 'SSR' || r.rarity === 'UR' ? '<div class="gc-mini-shine"></div>' : ''}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>
+    `;
 
-    const continueBtn = document.createElement('button');
-    continueBtn.className = 'btn bg-slate-700 text-white px-8 py-3 text-base hover:bg-slate-600';
-    continueBtn.textContent = 'Continue';
-    continueBtn.onclick = () => {
-        closeModal();
-        renderGacha(window.gameState);
-        updateUI(window.gameState);
-    };
+    // Staggered flips
+    for (let i = 0; i < results.length; i++) {
+        await _gcWait(_gcSkipped ? 0 : 120);
+        const mi = document.getElementById(`gc-mi-${i}`);
+        if (mi) {
+            mi.classList.add('gc-mini-flipped');
+            // Particle flash on high rarity
+            if (results[i].rarity === 'SSR' || results[i].rarity === 'UR') {
+                _gcMiniFlash(document.getElementById(`gc-mw-${i}`), _rarityColors[results[i].rarity]);
+            }
+        }
+    }
 
-    btnRow.appendChild(pullAgainBtn);
-    btnRow.appendChild(continueBtn);
-    container.appendChild(btnRow);
-    modalBody.appendChild(container);
+    await _gcWait(600);
+    _gcShowGridActions(container, results, root);
+}
+
+function _gcMiniFlash(wrapper, color) {
+    if (!wrapper) return;
+    const f = document.createElement('div');
+    f.className = 'gc-mini-fl';
+    f.style.background = color;
+    wrapper.appendChild(f);
+    setTimeout(() => f.remove(), 500);
+}
+
+function _gcShowSingleActions(container, result, root) {
+    const existing = root.querySelector('.gc-actions');
+    if (existing) existing.remove();
+
+    const actions = document.createElement('div');
+    actions.className = 'gc-actions';
+    actions.innerHTML = `
+        <button class="gc-act-btn gc-act-collect" onclick="_gcClose()">
+            <i class="fa-solid fa-check"></i> Collect
+        </button>
+        <button class="gc-act-btn gc-act-again" onclick="_gcPullAgain(${result.rarity === 'UR' ? 10 : 1})">
+            <i class="fa-solid fa-rotate-right"></i> Pull Again
+        </button>
+    `;
+    root.appendChild(actions);
+    requestAnimationFrame(() => actions.classList.add('gc-actions-show'));
+}
+
+function _gcShowGridActions(container, results, root) {
+    const existing = root.querySelector('.gc-actions');
+    if (existing) existing.remove();
+
+    const actions = document.createElement('div');
+    actions.className = 'gc-actions';
+    actions.innerHTML = `
+        <button class="gc-act-btn gc-act-collect" onclick="_gcClose()">
+            <i class="fa-solid fa-check"></i> Collect All
+        </button>
+        <button class="gc-act-btn gc-act-again" onclick="_gcPullAgain(${results.length})">
+            <i class="fa-solid fa-rotate-right"></i> Pull ×${results.length}
+        </button>
+    `;
+    root.appendChild(actions);
+    requestAnimationFrame(() => actions.classList.add('gc-actions-show'));
+}
+
+window._gcClose = function() {
+    const root = document.getElementById('gc-root');
+    if (root) {
+        root.classList.remove('gc-root-visible');
+        setTimeout(() => { root.remove(); }, 500);
+    }
+    renderGacha(window.gameState);
+    updateUI(window.gameState);
+};
+
+window._gcPullAgain = function(count) {
+    const root = document.getElementById('gc-root');
+    if (root) root.remove();
+    _gcActive  = false;
+    _gcSkipped = false;
+    setTimeout(() => handleGachaPull(count), 80);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+//   UTILITIES
+// ─────────────────────────────────────────────────────────────────────────────
+
+function _gcRarityStars(rarity) {
+    const counts = { N:1, R:2, SR:3, SSR:4, UR:5 };
+    const n = counts[rarity] || 1;
+    const colors = { N:'#10b981', R:'#3b82f6', SR:'#8b5cf6', SSR:'#f59e0b', UR:'#ec4899' };
+    const c = colors[rarity] || '#fff';
+    return Array.from({length:n}).map(() => `<i class="fa-solid fa-star" style="color:${c};filter:drop-shadow(0 0 4px ${c})"></i>`).join('');
 }
